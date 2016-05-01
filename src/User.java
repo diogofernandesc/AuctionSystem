@@ -1,14 +1,23 @@
+import java.util.Random;
+
 public class User {
 
-    String givenName;
-    String familyName;
-    String userID;
-    String password;
+    private Random random = new Random();
 
-    public User(String givenName, String familyName, String userID, String password) {
+    private String givenName;
+    private String familyName;
+    private int userID;
+    private String password;
+
+    public User(String givenName, String familyName, String password) {
         this.givenName = givenName;
         this.familyName = familyName;
-        this.userID = userID;
+        this.userID = generateID();
         this.password = password;
+    }
+
+    protected int generateID() {
+        int n = random.nextInt(1001);
+        return n;
     }
 }
