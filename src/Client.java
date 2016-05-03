@@ -49,6 +49,7 @@ class Display extends JFrame {
         container.add(panels);
         this.pack();
         this.setVisible(true);
+        this.setResizable(false);
 
     }
 
@@ -168,57 +169,56 @@ class Display extends JFrame {
 
     class MainClientUI extends JPanel {
 
+        private JPanel topPanel;
         private JPanel bottomPanel;
         private JPanel itemSearchPanel;
         private JPanel itemDisplayPanel;
 
         public MainClientUI() {
-           this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+           this.setLayout(new BorderLayout());
             init();
         }
 
         protected void init() {
 
             JLabel title = new JLabel("Hello user [userID here]");
-            title.setFont(new Font("Serif", Font.BOLD, 15));
+            title.setFont(new Font(title.getFont().getFontName(), Font.BOLD, 13));
             title.setHorizontalAlignment(SwingConstants.CENTER);
-//            this.add(title, BorderLayout.NORTH);
-            this.add(title);
+
+            topPanel = new JPanel();
+            topPanel.setLayout(new FlowLayout());
+            topPanel.add(title);
+            this.add(topPanel, BorderLayout.NORTH);
 
             bottomPanel = new JPanel();
-            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+            bottomPanel.setLayout(new FlowLayout());
 
             itemSearchPanel = new JPanel();
             itemSearchPanel.setLayout(new BoxLayout(itemSearchPanel, BoxLayout.Y_AXIS));
             itemSearchPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemSearchPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Search"));
+            itemSearchPanel.setPreferredSize(new Dimension(200,545));
 
             itemDisplayPanel = new JPanel();
             itemDisplayPanel.setLayout(new BoxLayout(itemDisplayPanel, BoxLayout.Y_AXIS));
             itemDisplayPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemDisplayPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Display"));
+            itemDisplayPanel.setPreferredSize(new Dimension(600,545));
 
-            // Panel for unique ID
-            JPanel uniqueIDPanel = new JPanel();
-            uniqueIDPanel.setLayout(new BoxLayout(uniqueIDPanel, BoxLayout.X_AXIS));
-            JLabel itemIDLabel = new JLabel("Item ID:");
+            // Labels and fields for ID and created after:
+            JLabel itemIDLabel = new JLabel("Item ID");
+            itemIDLabel.setFont(new Font(itemIDLabel.getFont().getFontName(), Font.BOLD, 13));
             JTextField itemIDField = new JTextField();
-            itemIDField.setMaximumSize(new Dimension(1000,25));
+            itemIDField.setMaximumSize(new Dimension(600,20));
 
-            uniqueIDPanel.add(itemIDLabel);
-            uniqueIDPanel.add(itemIDField);
-
-            // Panel for created after
-            JPanel createdAfterPanel = new JPanel();
-            createdAfterPanel.setLayout(new BoxLayout(createdAfterPanel, BoxLayout.X_AXIS));
-            JLabel createdAfterLabel = new JLabel("Created after:");
+            JLabel createdAfterLabel = new JLabel("Created after");
+            createdAfterLabel.setFont(new Font(createdAfterLabel.getFont().getFontName(), Font.BOLD, 13));
             JTextField createdAfterField = new JTextField();
-            createdAfterField.setMaximumSize(new Dimension(1000,25));
-            createdAfterPanel.add(createdAfterLabel);
-            createdAfterPanel.add(createdAfterField);
+            createdAfterField.setMaximumSize(new Dimension(600,20));
 
             // Radio buttons for the categories:
             JLabel categoriesLabel = new JLabel("Categories");
+            categoriesLabel.setFont(new Font(categoriesLabel.getFont().getFontName(), Font.BOLD, 13));
             JRadioButton homeRadio = new JRadioButton("Home & Garden");
             JRadioButton sportsRadio = new JRadioButton("Sports");
             JRadioButton electronicsRadio = new JRadioButton("Electronics");
@@ -238,12 +238,16 @@ class Display extends JFrame {
             categoryButtons.add(booksRadio);
             categoryButtons.add(otherRadio);
 
+            // Search button:
             JButton searchButton = new JButton("Search");
-            searchButton.setHorizontalAlignment(SwingConstants.CENTER);
+            searchButton.setMaximumSize(new Dimension(175,25));
 
-            itemSearchPanel.add(Box.createRigidArea(new Dimension(5,15)));
-            itemSearchPanel.add(uniqueIDPanel);
+
+            itemSearchPanel.add(Box.createRigidArea(new Dimension(0,15)));
+            itemSearchPanel.add(itemIDLabel);
             itemSearchPanel.add(Box.createRigidArea(new Dimension(5,5)));
+            itemSearchPanel.add(itemIDField);
+            itemSearchPanel.add(Box.createRigidArea(new Dimension(5,15)));
             itemSearchPanel.add(categoriesLabel);
             itemSearchPanel.add(homeRadio);
             itemSearchPanel.add(sportsRadio);
@@ -253,15 +257,16 @@ class Display extends JFrame {
             itemSearchPanel.add(clothingRadio);
             itemSearchPanel.add(booksRadio);
             itemSearchPanel.add(otherRadio);
+            itemSearchPanel.add(Box.createRigidArea(new Dimension(5,15)));
+            itemSearchPanel.add(createdAfterLabel);
             itemSearchPanel.add(Box.createRigidArea(new Dimension(5,5)));
-            itemSearchPanel.add(createdAfterPanel);
+            itemSearchPanel.add(createdAfterField);
             itemSearchPanel.add(Box.createRigidArea(new Dimension(5,25)));
             itemSearchPanel.add(searchButton);
+//            itemDisplayPanel.add(searchButton);
 
-            bottomPanel.add(itemSearchPanel);
-            bottomPanel.add(itemDisplayPanel);
-
-            this.add(bottomPanel);
+            this.add(itemSearchPanel, BorderLayout.WEST);
+            this.add(itemDisplayPanel, BorderLayout.EAST);
 //            bottomPanel.add(itemSearchPanel,BorderLayout.WEST);
 //            bottomPanel.add(itemDisplayPanel,BorderLayout.EAST);
 
