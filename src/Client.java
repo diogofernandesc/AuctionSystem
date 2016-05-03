@@ -170,40 +170,36 @@ class Display extends JFrame {
     class MainClientUI extends JPanel {
 
         private JPanel topPanel;
-        private JPanel bottomPanel;
+        private JPanel itemPanelBottom;
         private JPanel itemSearchPanel;
         private JPanel itemDisplayPanel;
 
         public MainClientUI() {
-           this.setLayout(new BorderLayout());
+            this.setLayout(new BorderLayout());
             init();
         }
 
         protected void init() {
 
-            JLabel title = new JLabel("Hello user [userID here]");
-            title.setFont(new Font(title.getFont().getFontName(), Font.BOLD, 13));
-            title.setHorizontalAlignment(SwingConstants.CENTER);
 
-            topPanel = new JPanel();
-            topPanel.setLayout(new FlowLayout());
-            topPanel.add(title);
-            this.add(topPanel, BorderLayout.NORTH);
+            JTabbedPane tabbedPane = new JTabbedPane();
+            this.add(tabbedPane);
 
-            bottomPanel = new JPanel();
-            bottomPanel.setLayout(new FlowLayout());
+            /* -----------VIEW BIDS TABBED PANE--------------*/
+            JPanel viewBidsPanel = new JPanel();
+            viewBidsPanel.setLayout(new BorderLayout());
 
             itemSearchPanel = new JPanel();
             itemSearchPanel.setLayout(new BoxLayout(itemSearchPanel, BoxLayout.Y_AXIS));
             itemSearchPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemSearchPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Search"));
-            itemSearchPanel.setPreferredSize(new Dimension(200,545));
+            itemSearchPanel.setPreferredSize(new Dimension(195, 0));
 
             itemDisplayPanel = new JPanel();
             itemDisplayPanel.setLayout(new BoxLayout(itemDisplayPanel, BoxLayout.Y_AXIS));
             itemDisplayPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemDisplayPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Display"));
-            itemDisplayPanel.setPreferredSize(new Dimension(600,545));
+            itemDisplayPanel.setPreferredSize(new Dimension(590,535));
 
             // Labels and fields for ID and created after:
             JLabel itemIDLabel = new JLabel("Item ID");
@@ -242,7 +238,6 @@ class Display extends JFrame {
             JButton searchButton = new JButton("Search");
             searchButton.setMaximumSize(new Dimension(175,25));
 
-
             itemSearchPanel.add(Box.createRigidArea(new Dimension(0,15)));
             itemSearchPanel.add(itemIDLabel);
             itemSearchPanel.add(Box.createRigidArea(new Dimension(5,5)));
@@ -265,8 +260,8 @@ class Display extends JFrame {
             itemSearchPanel.add(searchButton);
 //            itemDisplayPanel.add(searchButton);
 
-            this.add(itemSearchPanel, BorderLayout.WEST);
-            this.add(itemDisplayPanel, BorderLayout.EAST);
+            viewBidsPanel.add(itemSearchPanel, BorderLayout.WEST);
+            viewBidsPanel.add(itemDisplayPanel, BorderLayout.CENTER);
 //            bottomPanel.add(itemSearchPanel,BorderLayout.WEST);
 //            bottomPanel.add(itemDisplayPanel,BorderLayout.EAST);
 
@@ -278,6 +273,78 @@ class Display extends JFrame {
 //
 //
 //            this.add(bottomPanel, BorderLayout.CENTER);
+
+            // Created tabbed panes:
+
+            tabbedPane.addTab("View bids", viewBidsPanel);
+
+
+            /*--------SUBMIT ITEM TABBED PANE--------*/
+            JPanel submitItemPanel = new JPanel();
+            submitItemPanel.setLayout(new BorderLayout());
+
+            JPanel itemPanelBottom = new JPanel();
+            itemPanelBottom.setLayout(new BoxLayout(itemPanelBottom, BoxLayout.Y_AXIS));
+
+            JLabel sellTitle = new JLabel("Got something to sell?");
+            sellTitle.setFont(new Font(sellTitle.getFont().getFontName(), Font.BOLD, 40));
+            sellTitle.setHorizontalAlignment(SwingConstants.CENTER);
+            submitItemPanel.add(sellTitle, BorderLayout.NORTH);
+
+            // Necessary components for registration screen:
+            JLabel itemTitleLabel = new JLabel("Title - Keep this short and sweet");
+            JTextField itemTitleField = new JTextField();
+            itemTitleField.setMaximumSize(new Dimension(200, 25));
+            JLabel itemDescriptionLabel = new JLabel("Full item description");
+            JTextArea itemDescriptionField = new JTextArea();
+            itemDescriptionField.setLineWrap(true);
+            itemDescriptionField.setMaximumSize(new Dimension(200, 100));
+            JLabel itemCategoryLabel = new JLabel("Category");
+
+            // Creating categories JComboBox
+
+            String[] categoriesArray = {"Home & Garden", "Sports", "Electronics", "Jewellery & Watches", "Toys & Games",
+            "Clothing", "Books & Comics", "Other"};
+            JComboBox categoriesCombo = new JComboBox(categoriesArray);
+            categoriesCombo.setMaximumSize(new Dimension(200,25));
+
+            JLabel itemReservePriceLabel = new JLabel("Reserve Price");
+            JTextField itemReservePriceField = new JTextField();
+            itemReservePriceField.setMaximumSize(new Dimension(200,25));
+            JButton submitItemButton = new JButton("Submit item");
+
+            // Center components
+            itemTitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemTitleField.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemDescriptionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemDescriptionField.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemCategoryLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            categoriesCombo.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemReservePriceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            itemReservePriceField.setAlignmentX(Component.CENTER_ALIGNMENT);
+            submitItemButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,35)));
+            itemPanelBottom.add(itemTitleLabel);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemTitleField);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemDescriptionLabel);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemDescriptionField);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemCategoryLabel);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(categoriesCombo);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemReservePriceLabel);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,5)));
+            itemPanelBottom.add(itemReservePriceField);
+            itemPanelBottom.add(Box.createRigidArea(new Dimension(5,35)));
+            itemPanelBottom.add(submitItemButton);
+
+            submitItemPanel.add(itemPanelBottom, BorderLayout.CENTER);
+            tabbedPane.addTab("Sell item", submitItemPanel);
         }
 
     }
