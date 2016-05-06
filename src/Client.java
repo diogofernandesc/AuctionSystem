@@ -3,6 +3,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 
 
 public class Client {
@@ -22,7 +25,7 @@ class Display extends JFrame {
     }
 
     protected void init() {
-        this.setPreferredSize(new Dimension(800, 600));
+        this.setPreferredSize(new Dimension(1200, 600));
         this.setResizable(true);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -193,13 +196,13 @@ class Display extends JFrame {
             itemSearchPanel.setLayout(new BoxLayout(itemSearchPanel, BoxLayout.Y_AXIS));
             itemSearchPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemSearchPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Search"));
-            itemSearchPanel.setPreferredSize(new Dimension(195, 0));
+            itemSearchPanel.setPreferredSize(new Dimension(195,0));
 
             itemDisplayPanel = new JPanel();
             itemDisplayPanel.setLayout(new BoxLayout(itemDisplayPanel, BoxLayout.Y_AXIS));
             itemDisplayPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             itemDisplayPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Display"));
-            itemDisplayPanel.setPreferredSize(new Dimension(590,535));
+            itemDisplayPanel.setPreferredSize(new Dimension(990,535));
 
             // Labels and fields for ID and created after:
             JLabel itemIDLabel = new JLabel("Item ID");
@@ -258,22 +261,35 @@ class Display extends JFrame {
             itemSearchPanel.add(createdAfterField);
             itemSearchPanel.add(Box.createRigidArea(new Dimension(5,25)));
             itemSearchPanel.add(searchButton);
-//            itemDisplayPanel.add(searchButton);
+
+            // ITEM DISPLAY PANEL //
+
+            String[] values = {"1", "2", "3"};
+            //JList bids = new JList(listModel);
+            String[] columnNames = {"ID", "Title", "Description", "Category", "Vendor ID", "Start time", "Close Time", "Reserve Price", "Current bids"};
+            Object[][] data = {{new Integer(1), "random","pretty awesome pretty awesomepretty awesome pretty awesome ", "Sports", "242", "01:42", "04:42", "£123.00", values}};
+
+            // Makes jtable uneditable apart from the last bids comboBox which is only there to show a list of bids
+            // Needs to be editable to see contents
+            JTable table = new JTable(data, columnNames) {
+                public boolean isCellEditable(int r, int c) {
+                    if (c==8) {
+                        return true;
+                    } else { return false; }
+            }};
+
+            itemDisplayPanel.add(table.getTableHeader());
+            itemDisplayPanel.add(table);
+
+            table.getColumn("Current bids").setCellEditor(new BidComboBoxEditor(values));
+            table.getColumn("Current bids").setCellRenderer(new BidComboBoxRenderer(values));
+            table.setRowHeight(0, 20);
+            table.getColumn("ID").setPreferredWidth(10);
+            table.getColumn("Description").setPreferredWidth(250);
+
 
             viewBidsPanel.add(itemSearchPanel, BorderLayout.WEST);
             viewBidsPanel.add(itemDisplayPanel, BorderLayout.CENTER);
-//            bottomPanel.add(itemSearchPanel,BorderLayout.WEST);
-//            bottomPanel.add(itemDisplayPanel,BorderLayout.EAST);
-
-//            this.add(bottomPanel, BorderLayout.CENTER);
-            //// ITEM DISPLAY ////
-
-//            JList<Item> itemList = new JList();
-//            DefaultListModel model = new DefaultListModel();
-//
-//
-//            this.add(bottomPanel, BorderLayout.CENTER);
-
             // Created tabbed panes:
 
             tabbedPane.addTab("View bids", viewBidsPanel);
@@ -309,7 +325,7 @@ class Display extends JFrame {
             categoriesCombo.setMaximumSize(new Dimension(200,25));
 
             JLabel itemReservePriceLabel = new JLabel("Reserve Price");
-            JTextField itemReservePriceField = new JTextField();
+            JTextField itemReservePriceField = new JTextField("£");
             itemReservePriceField.setMaximumSize(new Dimension(200,25));
             JButton submitItemButton = new JButton("Submit item");
 
@@ -346,6 +362,30 @@ class Display extends JFrame {
             submitItemPanel.add(itemPanelBottom, BorderLayout.CENTER);
             tabbedPane.addTab("Sell item", submitItemPanel);
         }
+    }
 
+    class BidComboBoxRenderer extends JComboBox implements TableCellRenderer {
+        public BidComboBoxRenderer(String[] bids) {
+            super(bids);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+            if (isSelected) {
+                setForeground(table.getSelectionForeground());
+                super.setBackground(table.getSelectionBackground());
+            } else {
+                setForeground(table.getForeground());
+                setBackground(table.getBackground());
+            }
+            setSelectedItem(value);
+            return this;
+        }
+    }
+
+    class BidComboBoxEditor extends DefaultCellEditor {
+        public BidComboBoxEditor(String[] bids) {
+            super(new JComboBox(bids));
+        }
     }
 }
