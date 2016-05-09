@@ -1,58 +1,67 @@
 import java.io.*;
 import java.net.*;
-import java.util.LinkedList;
-import java.util.Scanner;
 
-public class ClientComms {
-
-//    BufferedReader in;
-//    PrintWriter out;
+public class ClientComms  {
 
     ObjectInputStream in;
     ObjectOutputStream out;
-    public void start() throws Exception {
+    RegisterMessage rm;
+    String str = "";
+    String message;
 
-        //Scanner sc = new Scanner(System.in);
-        Socket socket = new Socket("127.0.0.1", 28847);
+    public void start()  {
+        try {
 
-        //Scanner inputStream = new Scanner(socket.getInputStream()); EQUIVALENT
-        // In from server:
-        //        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            Socket socket = new Socket("127.0.0.1", 28847);
 
-        in = new ObjectInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+
+            in = new ObjectInputStream(socket.getInputStream());
 
 
-        //PrintStream printStream = new PrintStream(scanner.getOutputStream()); EQUIVALENT
-        // Out to server
-        //        out = new PrintWriter (new OutputStreamWriter(socket.getOutputStream()),true);
-        out = new ObjectOutputStream(socket.getOutputStream());
+            //
 
-        //        LinkedList<Message> inList = new LinkedList<>();
-        //        Message serverMessage = null;
-        //        inList = (LinkedList<Message>) inList.readObject();
-        // System.out.println("Enter any number");
-        // number = sc.nextInt();
+            //
+            //        while((str = (String) in.readObject()) != null) {
+            //            System.out.println(str);
+            //            out.writeObject("bye");
+            //        }
+            //
+//            while ((message = (String)in.readObject()) != null) {
+//                message = (String) in.readObject();
+//                System.out.println("Message: " + message);
+//            }
 
-        //p.println(number); // Here you want to pass the number to the client
+
+            for(int i =0; i < 2; i++ ) {
+                String message = (String) in.readObject();
+                System.out.println("Message: " + message);
+            }
+
+
+
+//
+
+
+        } catch(IOException e) {e.printStackTrace();
+
+        } catch(ClassNotFoundException e) {e.printStackTrace();}
+
+
+        //out.close();
 
     }
 
     protected void sendRegisterMessage(String givenName, String familyName, String password)  {
 
         try {
-            RegisterMessage rm = new RegisterMessage(givenName, familyName, password);
+            rm = new RegisterMessage(givenName, familyName, password);
             out.writeObject(rm);
-            out.flush();
+
         } catch(Exception e) { e.printStackTrace();}
     }
 
-    protected void sendClientMessage() {
-
-    }
-
-    protected void sendServerMessage() {
-
-    }
 
     protected void receiveServerMessage() {
         try {

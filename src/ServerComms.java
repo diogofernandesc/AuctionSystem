@@ -1,52 +1,49 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Scanner;
 
-public class ServerComms  {
+
+public class ServerComms {
 
     ObjectInputStream in;
     ObjectOutputStream out;
-    Message message ;
-    ArrayList<Message> inList;
+    Message message;
+    private ServerSocket serverSocket;
+    String response;
+    Socket socket;
+
+    public ServerComms() throws IOException {
+        serverSocket = new ServerSocket(28847);
+        response = null;
+        socket = serverSocket.accept();
+        out = new ObjectOutputStream(socket.getOutputStream());
+    }
+
+    public void start() {
+        try {
+            while (true) {
+                in = new ObjectInputStream(socket.getInputStream());
+                message = (Message) in.readObject();
+            }
+
+        } catch (IOException e) {e.printStackTrace();
+        } catch(ClassNotFoundException e) {e.printStackTrace();}
+
+    }
 
 
-    public void start() throws Exception {
-        //28847
-        ServerSocket serverSocket = new ServerSocket(28847);
+    public Message readRegisterMessage() {
+        RegisterMessage registerMessage = (RegisterMessage) message;
+        return registerMessage;
 
-        while (true) {
-            Socket socket = serverSocket.accept();
+    }
 
-//            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//            PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-
-            // In from client
-            in = new ObjectInputStream(socket.getInputStream());
-
-            // Out to client
-            out = new ObjectOutputStream(socket.getOutputStream());
-
-            inList = new ArrayList<>();
-            Message inMsg = null;
-            inList = (ArrayList<Message>) in.readObject();
-
-//            message = (Message) in.readObject();
-//            System.out.println(in.readLine());
-//            out.println(System.console().readLine());
-            //socket.close();
+    protected void Response(String response)  {
+        try {
+            out.writeObject("hello");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 
-    protected Message readMessage() throws Exception {
-        inList.get(0);
-        message = (Message) in.readObject();
-        return message;
-    }
 
-    protected void response() throws IOException {
-        out.writeObject("Hello");
-    }
 }

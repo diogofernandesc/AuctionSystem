@@ -1,4 +1,6 @@
-public class RegisterMessage extends Message {
+import java.io.Serializable;
+
+public class RegisterMessage extends Message implements Serializable {
 
     String givenName;
     String familyName;
