@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class RegisterMessage extends Message implements Serializable {
+public class RegisterMessage extends Message {
 
     String givenName;
     String familyName;

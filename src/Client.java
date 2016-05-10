@@ -16,8 +16,6 @@ public class Client {
         Display window = new Display("eAuctions");
         window.init();
         comms = new ClientComms();
-        comms.start();
-
     }
 
     public static void main(String[] args) throws Exception {
@@ -172,7 +170,9 @@ public class Client {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             //sendRegisterMessage(givenNameField.getText(), familyNameField.getText(), String.valueOf(passwordField.getPassword()));
+                            comms.startConnection();
                             sendRegisterMessage(givenNameField.getText(), familyNameField.getText(), String.valueOf(passwordField.getPassword()));
+
                         } catch (Exception e1) {e1.printStackTrace();}
                     }
                 });

@@ -10,6 +10,7 @@ public class Server {
 
 
     public Server()  {
+        userList = new ArrayList<>();
         try {
             comms = new ServerComms();
             comms.start();
@@ -25,18 +26,20 @@ public class Server {
         }
     }
 
+
+
     // Set the key value to be one more than the size
     // hashmap of userID to given and family name
     protected void receiveRegisterMessage()  {
         try {
             //RegisterMessage message = (RegisterMessage) comms.readMessage();
 
-            RegisterMessage message = (RegisterMessage) comms.readRegisterMessage();
-            if (message != null) {
-                userList.add(new User(message.getGivenName(), message.getFamilyName(), message.getPassword()));
-                users.put(users.size() + 1, (message.getGivenName() + " " + message.getFamilyName()));
-                comms.Response((String) users.get(1));
-            }
+            RegisterMessage message = comms.readRegisterMessage();
+
+            userList.add(new User(message.getGivenName(), message.getFamilyName(), message.getPassword()));
+            users.put(users.size() + 1, (message.getGivenName() + " " + message.getFamilyName()));
+            comms.Response((String) users.get(1));
+
 
         } catch (Exception e) {e.printStackTrace();}
     }

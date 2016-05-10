@@ -14,15 +14,36 @@ public class ServerComms {
     public ServerComms() throws IOException {
         serverSocket = new ServerSocket(28847);
         response = null;
-        socket = serverSocket.accept();
-        out = new ObjectOutputStream(socket.getOutputStream());
+
+    }
+
+    public class Handler extends Thread
+    {
+        private boolean stop;
+
+        public Handler()
+        {
+            //socket setup
+        }
+
+        public void run()
+        {
+            while(!stop)
+            {
+                //getMessage...
+                //Handle message and write out
+            }
+        }
     }
 
     public void start() {
         try {
             while (true) {
+                socket = serverSocket.accept();
+                out = new ObjectOutputStream(socket.getOutputStream());
                 in = new ObjectInputStream(socket.getInputStream());
                 message = (Message) in.readObject();
+
             }
 
         } catch (IOException e) {e.printStackTrace();
@@ -31,7 +52,7 @@ public class ServerComms {
     }
 
 
-    public Message readRegisterMessage() {
+    public RegisterMessage readRegisterMessage() {
         RegisterMessage registerMessage = (RegisterMessage) message;
         return registerMessage;
 

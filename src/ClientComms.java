@@ -5,19 +5,27 @@ public class ClientComms  {
 
     ObjectInputStream in;
     ObjectOutputStream out;
+    Socket s;
     RegisterMessage rm;
     String str = "";
     String message;
 
+    public ClientComms()
+    {
+//        try {
+//            s = new Socket("127.0.0.1", 28847);
+//
+//            out = new ObjectOutputStream(s.getOutputStream());
+//            //out.flush();
+//
+//            in = new ObjectInputStream(s.getInputStream());
+//        }
+//        catch(Exception e){}
+    }
     public void start()  {
         try {
 
-            Socket socket = new Socket("127.0.0.1", 28847);
 
-            out = new ObjectOutputStream(socket.getOutputStream());
-            out.flush();
-
-            in = new ObjectInputStream(socket.getInputStream());
 
 
             //
@@ -34,10 +42,10 @@ public class ClientComms  {
 //            }
 
 
-            for(int i =0; i < 2; i++ ) {
+            //for(int i =0; i < 2; i++ ) {
                 String message = (String) in.readObject();
                 System.out.println("Message: " + message);
-            }
+          //  }
 
 
 
@@ -53,12 +61,21 @@ public class ClientComms  {
 
     }
 
+    protected void startConnection() {
+        try {
+            s = new Socket("127.0.0.1", 28847);
+            out = new ObjectOutputStream(s.getOutputStream());
+            in = new ObjectInputStream(s.getInputStream());
+            //start();
+        }catch(Exception e){}
+    }
+
     protected void sendRegisterMessage(String givenName, String familyName, String password)  {
 
         try {
             rm = new RegisterMessage(givenName, familyName, password);
             out.writeObject(rm);
-
+            start();
         } catch(Exception e) { e.printStackTrace();}
     }
 
