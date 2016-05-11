@@ -9,9 +9,10 @@ public class ClientComms  {
     RegisterMessage rm;
     String str = "";
     String message;
+    Boolean readReady;
+    Thread t;
 
-    public ClientComms()
-    {
+    public ClientComms() {
 //        try {
 //            s = new Socket("127.0.0.1", 28847);
 //
@@ -21,9 +22,13 @@ public class ClientComms  {
 //            in = new ObjectInputStream(s.getInputStream());
 //        }
 //        catch(Exception e){}
+
+        t = new ReceiveThread();
     }
-    public void start()  {
-        try {
+
+
+//    public void start()  {
+//        try {
 
 
 
@@ -43,8 +48,7 @@ public class ClientComms  {
 
 
             //for(int i =0; i < 2; i++ ) {
-                String message = (String) in.readObject();
-                System.out.println("Message: " + message);
+
           //  }
 
 
@@ -52,21 +56,21 @@ public class ClientComms  {
 //
 
 
-        } catch(IOException e) {e.printStackTrace();
-
-        } catch(ClassNotFoundException e) {e.printStackTrace();}
+//        } catch(IOException e) {e.printStackTrace();
+//
+//        } catch(ClassNotFoundException e) {e.printStackTrace();}
 
 
         //out.close();
 
-    }
+    //}
 
     protected void startConnection() {
         try {
             s = new Socket("127.0.0.1", 28847);
             out = new ObjectOutputStream(s.getOutputStream());
+            out.flush();
             in = new ObjectInputStream(s.getInputStream());
-            //start();
         }catch(Exception e){}
     }
 
@@ -75,7 +79,7 @@ public class ClientComms  {
         try {
             rm = new RegisterMessage(givenName, familyName, password);
             out.writeObject(rm);
-            start();
+            t.start();
         } catch(Exception e) { e.printStackTrace();}
     }
 
@@ -84,6 +88,24 @@ public class ClientComms  {
         try {
             System.out.println((String) in.readObject());
         } catch(Exception e1) {System.out.println(e1 + "receive error");}
+    }
+
+    class ReceiveThread extends Thread {
+
+
+        public void run() {
+            while (true) {
+                try {
+                    String message = (String) in.readObject();
+                    System.out.println("Message: " + message);
+
+
+                } catch(IOException e) {e.printStackTrace();
+                } catch(ClassNotFoundException e) {e.printStackTrace();}
+
+            }
+
+        }
     }
 
 

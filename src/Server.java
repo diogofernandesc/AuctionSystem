@@ -12,32 +12,25 @@ public class Server {
     public Server()  {
         userList = new ArrayList<>();
         try {
-            comms = new ServerComms();
-            comms.start();
+            comms = new ServerComms(this);
+            //comms.start();
             users = new HashMap();
             userPasswords = new HashMap();
-            receiveRegisterMessage();
+
         } catch (Exception e) {e.printStackTrace();}
     }
-
-    protected void getMessages() {
-        while(true) {
-            receiveRegisterMessage();
-        }
-    }
-
 
 
     // Set the key value to be one more than the size
     // hashmap of userID to given and family name
-    protected void receiveRegisterMessage()  {
+    protected void receiveRegisterMessage(RegisterMessage message)  {
         try {
-            //RegisterMessage message = (RegisterMessage) comms.readMessage();
 
-            RegisterMessage message = comms.readRegisterMessage();
-
-            userList.add(new User(message.getGivenName(), message.getFamilyName(), message.getPassword()));
-            users.put(users.size() + 1, (message.getGivenName() + " " + message.getFamilyName()));
+//            User user = new User(message.getGivenName(), message.getFamilyName(), message.getPassword());
+//           userList.add(new User(message.getGivenName(), message.getFamilyName(), message.getPassword()));
+         //   users.put(users.size() + 1, user);
+           users.put(users.size() + 1, (message.getGivenName() + " " + message.getFamilyName()));
+            //comms.Response(user.getGivenName() + " " + user.getFamilyName() + " " + user.getPassword());]
             comms.Response((String) users.get(1));
 
 
