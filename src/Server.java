@@ -1,21 +1,24 @@
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.chrono.IsoChronology;
+import java.util.*;
 
 public class Server {
 
     ServerComms comms;
-    HashMap users;
-    HashMap userPasswords;
-    ArrayList<User> userList;
+    ArrayList<User> activeUsersList;
+    ArrayList<Item> itemsList;
+    Map<String, User> users;
+    Map<Integer, Item> items;
+
 
 
     public Server()  {
-        userList = new ArrayList<>();
+
         try {
             comms = new ServerComms(this);
             //comms.start();
-            users = new HashMap();
-            userPasswords = new HashMap();
+            users = new HashMap<>();
+            items = new HashMap<>();
+            itemsList = new ArrayList<Item>();
 
         } catch (Exception e) {e.printStackTrace();}
     }
@@ -25,16 +28,53 @@ public class Server {
     // hashmap of userID to given and family name
     protected void receiveRegisterMessage(RegisterMessage message)  {
         try {
+            if (users.containsKey(message.getUsername())) {
+                sendReply("invalid");
 
-//            User user = new User(message.getGivenName(), message.getFamilyName(), message.getPassword());
-//           userList.add(new User(message.getGivenName(), message.getFamilyName(), message.getPassword()));
-         //   users.put(users.size() + 1, user);
-           users.put(users.size() + 1, (message.getGivenName() + " " + message.getFamilyName()));
-            //comms.Response(user.getGivenName() + " " + user.getFamilyName() + " " + user.getPassword());]
-            comms.Response((String) users.get(1));
-
+            } else {
+                User user = new User(message.getUsername(), message.getGivenName(), message.getFamilyName(), message.getPassword());
+                users.put(user.getUserID(), user);
+                sendReply(users.get(user.getUserID()).getUserID());
+            }
 
         } catch (Exception e) {e.printStackTrace();}
+    }
+
+    protected void receiveSignInMessage(SignInMessage message) {
+        String messageUserID = message.getUserID();
+        String messagePassword = message.getPassword();
+
+        if (users.containsKey(messageUserID)) {
+            if (users.get(messageUserID).getPassword().equals(messagePassword)) {
+                sendReply("success,"+messageUserID);
+            } else {
+                sendReply("wrong password");
+            }
+        } else {
+            sendReply("wrong username");
+        }
+    }
+
+    protected void receiveSellItemMessage(SellItemMessage message) {
+        int itemID = items.size() + 1;
+        String messageTitle = message.getTitle();
+        String messageDescription = message.getDescription();
+        String messageCatKeyword = message.getCatKeyword();
+        String messageVendorID = message.getVendorID();
+        Date messageStartTime = message.getStartTime();
+        Date messageCloseTime = message.getCloseTime();
+        int messageReservePrice = message.getReservePrice();
+        ArrayList<Bid> messageBidList = new ArrayList<>();
+
+        Item item = new Item(itemID,messageTitle,messageDescription, messageCatKeyword, messageVendorID, messageStartTime, messageCloseTime, messageReservePrice, messageBidList);
+        items.put(itemID, item);
+        SellItemMessage messageOut = new SellItemMessage(itemID,messageTitle,messageDescription, messageCatKeyword, messageVendorID,
+                messageStartTime, messageCloseTime, messageReservePrice, messageBidList);
+        sendReply(messageOut);
+    }
+
+    protected void sendReply(Object message) {
+        comms.Response(message);
     }
 
 

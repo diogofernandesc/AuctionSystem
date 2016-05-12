@@ -39,7 +39,16 @@ public class ServerComms {
                 try {
                     // Handle message and write out
                     message = (Message) in.readObject();
-                    receiveRegisterMessage();
+
+                    if (message.getType().equals("register")) {
+                        receiveRegisterMessage();
+
+                    } else if(message.getType().equals("sign in")) {
+                        receiveSignInMessage();
+
+                    } else if(message.getType().equals("sell item")) {
+                        receiveSellItemMessage();
+                    }
 
                 } catch(IOException e) {e.printStackTrace();
                 } catch(ClassNotFoundException e) {e.printStackTrace(); }
@@ -48,28 +57,24 @@ public class ServerComms {
         }
     }
 
-//    public void start() {
-//        try {
-//            //while (true) {
-//                socket = serverSocket.accept();
-//                out = new ObjectOutputStream(socket.getOutputStream());
-//                in = new ObjectInputStream(socket.getInputStream());
-//
-//
-//            //}
-//
-//        } catch (IOException e) {e.printStackTrace();
-//        } catch(ClassNotFoundException e) {e.printStackTrace();}
-//
-//    }
+    protected void receiveSignInMessage() {
+        SignInMessage signInMessage = (SignInMessage) message;
+        server.receiveSignInMessage(signInMessage);
+    }
 
-    public void receiveRegisterMessage() {
+    protected void receiveRegisterMessage() {
         RegisterMessage registerMessage = (RegisterMessage) message;
         server.receiveRegisterMessage(registerMessage);
     }
 
-    protected void Response(String response)  {
+    protected void receiveSellItemMessage() {
+        SellItemMessage sellItemMessage = (SellItemMessage) message;
+        server.receiveSellItemMessage(sellItemMessage);
+    }
+
+    protected void Response(Object response)  {
         try {
+            //out.writeObject(String.valueOf(response));
             out.writeObject(response);
         } catch (IOException e) {
             e.printStackTrace();
