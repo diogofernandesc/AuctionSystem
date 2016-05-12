@@ -1,6 +1,7 @@
+import com.sun.org.glassfish.external.statistics.annotations.Reset;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class Client {
             panels.add(mainUIPanel, "main ui");
 
             cardLayout = (CardLayout) (panels.getLayout());
-            cardLayout.show(panels, "sign in");
+            cardLayout.show(panels, "main ui");
 
             container.add(panels);
             this.pack();
@@ -110,6 +111,11 @@ public class Client {
 
         public void receiveViewItemMessage(ViewItemMessage message) {
             ArrayList<Item> items = message.getSearchedItems();
+            mainUIPanel.newSearchTable(items);
+        }
+
+        public void receiveResetTableMessage(ResetTableMessage message) {
+            ArrayList<Item> items = message.getResetList();
             mainUIPanel.newSearchTable(items);
 
         }
@@ -312,13 +318,18 @@ public class Client {
 
                 // Labels and fields for ID and created after:
                 JLabel itemIDLabel = new JLabel("Item ID");
-                itemIDLabel.setMaximumSize(new Dimension(200,20));
                 itemIDLabel.setFont(new Font(itemIDLabel.getFont().getFontName(), Font.BOLD, 13));
                 JTextField itemIDField = new JTextField();
-                itemIDField.setMaximumSize(new Dimension(600, 20));
+                itemIDField.setMaximumSize(new Dimension(150, 20));
+
+                // Vendor ID:
+
+                JLabel vendorIDLabel = new JLabel("Vendor ID");
+                vendorIDLabel.setFont(new Font(vendorIDLabel.getFont().getFontName(), Font.BOLD, 13));
+                JTextField vendorIDField = new JTextField();
+                vendorIDField.setMaximumSize(new Dimension(150,20));
 
                 JLabel createdAfterLabel = new JLabel("Created after");
-                createdAfterLabel.setMaximumSize(new Dimension(200,20));
                 createdAfterLabel.setFont(new Font(createdAfterLabel.getFont().getFontName(), Font.BOLD, 13));
 
                 // Created after JSpinner for time and date:
@@ -327,99 +338,83 @@ public class Client {
                 JSpinner createdDateSpinner = new JSpinner(cdm);
                 JSpinner.DateEditor cde = new JSpinner.DateEditor(createdDateSpinner, "dd/MM/yyyy HH:mm:ss");
                 createdDateSpinner.setEditor(cde);
-                createdDateSpinner.setMaximumSize(new Dimension(300,20));
+                createdDateSpinner.setMaximumSize(new Dimension(150,20));
 
-
-                // Radio buttons for the categories:
+                // Categories JComboBox:
                 JLabel categoriesLabel = new JLabel("Categories");
                 categoriesLabel.setFont(new Font(categoriesLabel.getFont().getFontName(), Font.BOLD, 13));
-                JRadioButton homeRadio = new JRadioButton("Home & Garden");
-                homeRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton sportsRadio = new JRadioButton("Sports");
-                sportsRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton electronicsRadio = new JRadioButton("Electronics");
-                electronicsRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton jewelleryRadio = new JRadioButton("Jewellery & Watches");
-                jewelleryRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton gamesRadio = new JRadioButton("Toys & Games");
-                gamesRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton clothingRadio = new JRadioButton("Clothing");
-                clothingRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton booksRadio = new JRadioButton("Books & Comics");
-                booksRadio.setMaximumSize(new Dimension(300,20));
-                JRadioButton otherRadio = new JRadioButton("Other");
-                otherRadio.setMaximumSize(new Dimension(300,20));
+                String[] categoriesList = {"Home & Garden", "Sports", "Electronics", "Jewellery & Watches", "Toys & Games",
+                        "Clothing", "Books & Comics", "Other"};
+                JComboBox categoriesComboBox = new JComboBox(categoriesList);
+                categoriesComboBox.setMaximumSize(new Dimension(150, 20));
 
-                JPanel buttonPanel = new JPanel();
-                buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-                buttonPanel.setMaximumSize(new Dimension(300,190));
-                ButtonGroup categoryButtons = new ButtonGroup();
-                categoryButtons.add(homeRadio);
-                categoryButtons.add(sportsRadio);
-                categoryButtons.add(electronicsRadio);
-                categoryButtons.add(jewelleryRadio);
-                categoryButtons.add(gamesRadio);
-                categoryButtons.add(clothingRadio);
-                categoryButtons.add(booksRadio);
-                categoryButtons.add(otherRadio);
 
                 // Search button:
                 JButton searchButton = new JButton("Search");
-                searchButton.setMaximumSize(new Dimension(250, 25));
+                searchButton.setMaximumSize(new Dimension(125, 25));
 
                 searchButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        try {
-                            String category = categoryButtons.getSelection().getActionCommand();
-                            Date date = (Date) createdDateSpinner.getValue();
-                            comms.sendViewItemMessage(itemIDField.getText(), category, date);
-                        } catch (NullPointerException e1) {}
+                        String itemID = itemIDField.getText();
+                        String vendorID = vendorIDField.getText();
+
+                        if (itemID == null) {
+                            itemID= "";
+                        }
+
+                        if (vendorID == null) {
+                            vendorID = "";
+                        }
+                        String category = (String)categoriesComboBox.getSelectedItem();
+                        System.out.println("Category is: " + category);
+                        Date date = (Date) createdDateSpinner.getValue();
+                        comms.sendViewItemMessage(itemID, vendorID, category, date);
+
                     }
                 });
 
                 // Reset search button:
 
                 JButton resetSearchButton = new JButton("Reset search");
-                resetSearchButton.setMaximumSize(new Dimension(250,25));
+                resetSearchButton.setMaximumSize(new Dimension(125,25));
 
-                itemIDLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                resetSearchButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        comms.sendResetTableMessage();
+                    }
+                });
+
+
+                itemIDLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 itemIDField.setAlignmentX(Component.CENTER_ALIGNMENT);
-                categoriesLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                homeRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                sportsRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                electronicsRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                jewelleryRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                gamesRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                clothingRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                booksRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                otherRadio.setAlignmentX(Component.RIGHT_ALIGNMENT);
-                createdAfterLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                vendorIDLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                vendorIDField.setAlignmentX(Component.CENTER_ALIGNMENT);
+                categoriesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                categoriesComboBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+                createdAfterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 createdDateSpinner.setAlignmentX(Component.CENTER_ALIGNMENT);
                 searchButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                 resetSearchButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-                itemSearchPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                itemSearchPanel.add(Box.createRigidArea(new Dimension(0, 35)));
                 itemSearchPanel.add(itemIDLabel);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 5)));
                 itemSearchPanel.add(itemIDField);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 15)));
+                itemSearchPanel.add(vendorIDLabel);
+                itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 5)));
+                itemSearchPanel.add(vendorIDField);
+                itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 15)));
                 itemSearchPanel.add(categoriesLabel);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 5)));
-                buttonPanel.add(homeRadio);
-                buttonPanel.add(sportsRadio);
-                buttonPanel.add(electronicsRadio);
-                buttonPanel.add(jewelleryRadio);
-                buttonPanel.add(gamesRadio);
-                buttonPanel.add(clothingRadio);
-                buttonPanel.add(booksRadio);
-                buttonPanel.add(otherRadio);
-                itemSearchPanel.add(buttonPanel);
+                itemSearchPanel.add(categoriesComboBox);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 15)));
                 itemSearchPanel.add(createdAfterLabel);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 5)));
                 itemSearchPanel.add(createdDateSpinner);
-                itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 25)));
+                itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 45)));
                 itemSearchPanel.add(searchButton);
                 itemSearchPanel.add(Box.createRigidArea(new Dimension(5, 10)));
                 itemSearchPanel.add(resetSearchButton);
@@ -428,7 +423,7 @@ public class Client {
                 ArrayList<Integer> users = new ArrayList<Integer>();
 
                 //JList bids = new JList(listModel);
-                String[] columnNames = {"ID", "Title", "Description", "Category", "Vendor ID", "Start time", "Close Time", "Reserve Price"};
+                String[] columnNames = {"ID", "Title", "Description", "Category", "Seller ID", "Start Time", "Close Time", "Reserve Price"};
 //                tableData = {{new Integer(1), "random", "pretty awesome pretty awesomepretty awesome pretty awesome ", "Sports", "242", "01:42", "04:42", "£123.00", values}};
 
                 tableModel = new DefaultTableModel(columnNames, 0);
@@ -446,7 +441,7 @@ public class Client {
 
                 TableCellRenderer tableCellRenderer = new DefaultTableCellRenderer() {
 
-                    SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                    SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss dd/MM/yy");
 
                     public Component getTableCellRendererComponent(JTable table,
                                                                    Object value, boolean isSelected, boolean hasFocus,
@@ -466,10 +461,34 @@ public class Client {
 
 
                 table.setRowHeight(0, 20);
-                table.getColumn("ID").setPreferredWidth(10);
-                table.getColumn("Title").setPreferredWidth(150);
-                table.getColumn("Description").setPreferredWidth(250);
+                table.getColumn("ID").setPreferredWidth(5);
+                table.getColumn("Title").setPreferredWidth(100);
+                table.getColumn("Description").setPreferredWidth(150);
+                table.getColumn("Category").setPreferredWidth(60);
+                table.getColumn("Seller ID").setPreferredWidth(50);
+                table.getColumn("Start Time").setPreferredWidth(50);
+                table.getColumn("Close Time").setPreferredWidth(50);
                 table.getColumn("Reserve Price").setPreferredWidth(20);
+
+                table.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        if (e.getClickCount() == 2) {
+                            JTable target = (JTable)e.getSource();
+                            int row = target.getSelectedRow();
+                            String itemTitle = (String)target.getValueAt(row,1);
+                            int itemID = (Integer)target.getValueAt(row,0);
+                            String description = (String)target.getValueAt(row,2);
+                            String category = (String)target.getValueAt(row,3);
+                            double rp = (Double)target.getValueAt(row,7);
+                            Date startTime = (Date)target.getValueAt(row, 5);
+                            Date closeTime = (Date)target.getValueAt(row, 6);
+                            String sellerID = (String)target.getValueAt(row,4);
+
+                            createFrame(itemTitle, itemID, description, category, sellerID ,rp, startTime, closeTime);
+                        }
+                    }
+                });
 
                 itemDisplayPanel.add(table.getTableHeader());
                 itemDisplayPanel.add(table);
@@ -539,7 +558,7 @@ public class Client {
                         Date startDate = (Date) startDateSpinner.getValue();
                         Date endDate = (Date) endDateSpinner.getValue();
                         comms.sendSellItemMessage(itemTitleField.getText(), itemDescriptionField.getText(),category, activeUser,
-                                startDate, endDate, Integer.parseInt(itemReservePriceField.getText()));
+                                startDate, endDate, Double.parseDouble(itemReservePriceField.getText()));
                     }
                 });
 
@@ -588,26 +607,136 @@ public class Client {
 
                 submitItemPanel.add(itemPanelBottom, BorderLayout.CENTER);
                 tabbedPane.addTab("Sell item", submitItemPanel);
+
+
+                // --- SEE ACTIVE BIDS PANE --- //
+
+                JPanel activeBidsPanel = new JPanel();
+                tabbedPane.add("My bids", activeBidsPanel);
+
+
+                // -- My auctions -- //
+
+                JPanel myAuctionsPanel = new JPanel();
+                tabbedPane.add("My Auctions", myAuctionsPanel);
+
+            }
+
+
+            // ------ OPTION PANE TO BID ON ITEMS ------- //
+            public void createFrame(String itemTitle, int itemID, String description, String category, String sellerID, double reservePrice, Date startTime, Date closeTime) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JFrame windowFrame = new JFrame("Bid");
+                        windowFrame.setPreferredSize(new Dimension(400,400));
+                        windowFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        JPanel bidPanel = new JPanel();
+                        windowFrame.setContentPane(bidPanel);
+                        bidPanel.setLayout(new BorderLayout());
+                        JPanel bidBottom = new JPanel();
+                        bidBottom.setLayout(new BoxLayout(bidBottom, BoxLayout.Y_AXIS));
+                        JLabel bidTitleLabel = new JLabel("You are about to bid on..");
+                        bidTitleLabel.setFont(new Font(bidTitleLabel.getFont().getFontName(), Font.BOLD, 20));
+                        bidTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                        bidPanel.add(bidTitleLabel, BorderLayout.NORTH);
+
+                        JLabel bidItemTitle = new JLabel(itemTitle);
+                        bidItemTitle.setFont(new Font(bidItemTitle.getFont().getFontName(), Font.BOLD,15));
+                        JLabel bidItemID = new JLabel("Item ID: "+String.valueOf(itemID));
+                        JLabel bidSellerID = new JLabel("You are buying from: "+ sellerID);
+                        JLabel bidItemCategory = new JLabel("Category: "+category);
+                        JLabel itemDescriptionLabel = new JLabel("Description");
+                        JTextArea itemDescriptionArea = new JTextArea(description);
+                        itemDescriptionArea.setMaximumSize(new Dimension(225,100));
+                        itemDescriptionArea.setLineWrap(true);
+                        SimpleDateFormat dt = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy");
+
+                        JLabel bidStartTime = new JLabel("Start time: "+ dt.format(startTime));
+                        JLabel bidCloseTime = new JLabel("Close time: "+ dt.format(closeTime));
+                        bidCloseTime.setForeground(Color.RED);
+                        JLabel bidItemRP = new JLabel("Reserve Price: £"+reservePrice);
+
+                        JButton submitBidButton = new JButton("Submit");
+                        JTextField bidAmountField = new JTextField("Enter bid amount here");
+                        bidAmountField.setMaximumSize(new Dimension(150,20));
+
+
+                        bidItemTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidItemID.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidSellerID.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidItemCategory.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        itemDescriptionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        itemDescriptionArea.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidStartTime.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidCloseTime.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidItemRP.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        bidAmountField.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        submitBidButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 15)));
+                        bidBottom.add(bidItemTitle);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(bidItemID);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 25)));
+                        bidBottom.add(bidSellerID);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(bidItemCategory);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(itemDescriptionLabel);
+                        bidBottom.add(itemDescriptionArea);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(bidStartTime);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(bidCloseTime);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(bidItemRP);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 30)));
+                        bidBottom.add(bidAmountField);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(submitBidButton);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 10)));
+
+                        bidPanel.add(bidBottom, BorderLayout.CENTER);
+
+                        windowFrame.pack();
+                        windowFrame.setVisible(true);
+                        windowFrame.setResizable(false);
+
+
+                    }
+                });
             }
 
             protected void addItem(int itemID, String title, String description, String catKeyword,
-                                   String vendorID,Date startTime, Date closeTime, int reservePrice, ArrayList<Bid> bidList) {
+                                   String vendorID,Date startTime, Date closeTime, double reservePrice, ArrayList<Bid> bidList) {
 
-                Object[] objs = {itemID, title, description, catKeyword, vendorID, startTime, closeTime, reservePrice, bidList};
+                Object[] objs = {itemID, title, description, catKeyword, vendorID, startTime, closeTime, reservePrice};
 
                 tableModel.addRow(objs);
             }
 
             protected void newSearchTable(ArrayList<Item> items) {
-                tableModel.removeRow(0);
-               // tableModel.setRowCount(0);
-//                for (Item item : items) {
-//                    Object[] objs = {item.getItemID(), item.getTitle(), item.getDescription(), item.getCatKeyword(), item.getVendorID(),
-//                            item.getStartTime(), item.getCloseTime(), item.getReservePrice()};
-//                    tableModel.addRow(objs);
-//
-//                }
+                //tableModel.removeRow(0);
+                tableModel.setRowCount(0);
+                for (Item item : items) {
+                    System.out.println("ITEM:");
+                    System.out.println(item.getItemID());
+                    System.out.println(item.getTitle());
+                    System.out.println(item.getDescription());
+                    System.out.println(item.getCatKeyword());
+                    System.out.println(item.getVendorID());
+                    System.out.println(item.getStartTime());
+                    System.out.println(item.getCloseTime());
+                    System.out.println(item.getReservePrice());
+                    Object[] objs = {item.getItemID(), item.getTitle(), item.getDescription(), item.getCatKeyword(), item.getVendorID(),
+                            item.getStartTime(), item.getCloseTime(), item.getReservePrice()};
+                    tableModel.addRow(objs);
+
+                }
             }
+
+
 
         }
 

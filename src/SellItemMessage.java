@@ -12,10 +12,10 @@ public class SellItemMessage extends Message {
     private String vendorID;
     private Date startTime;
     private Date closeTime;
-    private int reservePrice;
+    private double reservePrice;
     private ArrayList<Bid> bidList;
 
-    public SellItemMessage(String title, String description, String catKeyword, String vendorID, Date startTime, Date closeTime, int reservePrice) {
+    public SellItemMessage(String title, String description, String catKeyword, String vendorID, Date startTime, Date closeTime, double reservePrice) {
         this.title = title;
         this.description = description;
         this.catKeyword = catKeyword;
@@ -29,7 +29,7 @@ public class SellItemMessage extends Message {
     // Overloaded constructors for sell item message sent from server to client
     // Server allocates a bid list
     public SellItemMessage(int itemID, String title, String description, String catKeyword, String vendorID,
-                           Date startTime, Date closeTime, int reservePrice, ArrayList<Bid> bidList) {
+                           Date startTime, Date closeTime, double reservePrice, ArrayList<Bid> bidList) {
         this.itemID = itemID;
         this.title = title;
         this.description = description;
@@ -71,7 +71,7 @@ public class SellItemMessage extends Message {
     }
 
 
-    public int getReservePrice() {
+    public double getReservePrice() {
         return reservePrice;
     }
 

@@ -52,6 +52,9 @@ public class ServerComms {
 
                     } else if(message.getType().equals("view item")) {
                         receiveViewItemMessage();
+
+                    } else if(message.getType().equals("reset table")) {
+                        receiveResetTableMessage();
                     }
 
                 } catch(IOException e) {e.printStackTrace();
@@ -79,6 +82,11 @@ public class ServerComms {
     protected void receiveViewItemMessage() {
         ViewItemMessage viewItemMessage = (ViewItemMessage) message;
         server.receiveViewItemMessage(viewItemMessage);
+    }
+
+    protected void receiveResetTableMessage() {
+        ResetTableMessage resetTableMessage = (ResetTableMessage) message;
+        server.receiveResetTableMessage(resetTableMessage);
     }
 
     protected void Response(Object response)  {

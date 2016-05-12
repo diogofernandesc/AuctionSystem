@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Vector;
 
-public class Item {
+public class Item implements Serializable{
 
     private int itemID;
     private String title;
@@ -12,16 +12,16 @@ public class Item {
     private String vendorID;
     private Date startTime;
     private Date closeTime;
-    private int reservePrice;
+    private double reservePrice;
     private ArrayList<Bid> bidList;
 
-    public Item(int itemID, String title, String description, String catKeyword, String vendorID,Date startTime, Date closeTime, int reservePrice, ArrayList<Bid> bidList) {
+    public Item(int itemID, String title, String description, String catKeyword, String vendorID,Date startTime, Date closeTime, double reservePrice, ArrayList<Bid> bidList) {
         this.itemID = itemID;
         this.title = title;
         this.description = description;
         this.catKeyword = catKeyword;
         this.vendorID = vendorID;
-        this.startTime = new Date();
+        this.startTime = startTime;
         this.closeTime = closeTime;
         this.reservePrice = reservePrice;
         this.bidList = bidList;
@@ -55,7 +55,7 @@ public class Item {
         return closeTime;
     }
 
-    public int getReservePrice() {
+    public double getReservePrice() {
         return reservePrice;
     }
 

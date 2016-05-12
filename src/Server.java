@@ -63,7 +63,7 @@ public class Server {
         String messageVendorID = message.getVendorID();
         Date messageStartTime = message.getStartTime();
         Date messageCloseTime = message.getCloseTime();
-        int messageReservePrice = message.getReservePrice();
+        double messageReservePrice = message.getReservePrice();
         ArrayList<Bid> messageBidList = new ArrayList<>();
 
         Item item = new Item(itemID,messageTitle,messageDescription, messageCatKeyword, messageVendorID, messageStartTime, messageCloseTime, messageReservePrice, messageBidList);
@@ -75,9 +75,11 @@ public class Server {
     }
 
     protected void receiveViewItemMessage(ViewItemMessage viewItemMessage) {
-        ArrayList<Item> searchedItemList = new ArrayList<Item>();
+        ArrayList<Item> searchedItemList = new ArrayList<>();
         String itemID = viewItemMessage.getItemID();
+        String vendorID = viewItemMessage.getVendorID();
         String category = viewItemMessage.getCategory();
+        System.out.println("gotten category is: " + category);
         Date createdAfterDate = viewItemMessage.getCreatedAfter();
         if (!viewItemMessage.getItemID().equals("")) {
             if (items.containsKey(Integer.parseInt(itemID))) {
@@ -86,17 +88,29 @@ public class Server {
         }
 
         for (Item item : itemsList) {
-            if (item.getCatKeyword().equals(category)) {
+            if (item.getCatKeyword() == (category)) {
                 searchedItemList.add(item);
-            }
 
-            if (item.getStartTime().after(createdAfterDate)) {
+            } else if (item.getStartTime().after(createdAfterDate)) {
                 searchedItemList.add(item);
+
+            } else if (!vendorID.equals("")) {
+                if (item.getVendorID().equals(vendorID)) {
+                    searchedItemList.add(item);
+                }
             }
         }
 
         ViewItemMessage searchedListMessage = new ViewItemMessage(searchedItemList);
         sendReply(searchedListMessage);
+    }
+
+    protected void receiveResetTableMessage(ResetTableMessage resetTableMessage) {
+        if (resetTableMessage.getInfo().equals("reset table")) {
+            ArrayList<Item> itemResetList = itemsList;
+            ResetTableMessage resetListMessage = new ResetTableMessage(itemResetList);
+            sendReply(resetListMessage);
+        }
     }
 
     protected void sendReply(Object message) {

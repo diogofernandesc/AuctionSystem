@@ -1,3 +1,5 @@
+import com.sun.org.glassfish.external.statistics.annotations.Reset;
+
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ public class ClientComms  {
     SignInMessage sm;
     SellItemMessage sellItemMessage;
     ViewItemMessage viewItemMessage;
+    ResetTableMessage resetTableMessage;
     String str = "";
     String messageExpected;
     Boolean readReady;
@@ -54,7 +57,7 @@ public class ClientComms  {
         } catch(IOException e) {e.printStackTrace();}
     }
 
-    protected void sendSellItemMessage(String title, String description, String catKeyword, String vendorID, Date startTime, Date closeTime, int reservePrice) {
+    protected void sendSellItemMessage(String title, String description, String catKeyword, String vendorID, Date startTime, Date closeTime, double reservePrice) {
         try {
             sellItemMessage = new SellItemMessage(title, description, catKeyword, vendorID,startTime, closeTime, reservePrice);
             out.writeObject(sellItemMessage);
@@ -63,11 +66,19 @@ public class ClientComms  {
         } catch (IOException e) {e.printStackTrace();}
     }
 
-    protected void sendViewItemMessage(String itemID, String category, Date createdAfter) {
+    protected void sendViewItemMessage(String itemID, String vendorID, String category, Date createdAfter) {
         try {
-            viewItemMessage = new ViewItemMessage(itemID, category, createdAfter);
+            viewItemMessage = new ViewItemMessage(itemID, vendorID,category, createdAfter);
             out.writeObject(viewItemMessage);
             messageExpected = "view item";
+        } catch(IOException e) {e.printStackTrace();}
+    }
+
+    protected void sendResetTableMessage() {
+        try {
+            resetTableMessage = new ResetTableMessage();
+            out.writeObject(resetTableMessage);
+            messageExpected = "reset table";
         } catch(IOException e) {e.printStackTrace();}
     }
 
@@ -92,6 +103,9 @@ public class ClientComms  {
         window.receiveViewItemMessage(message);
     }
 
+    protected void receiveResetTableMessage(ResetTableMessage message) {
+         window.receiveResetTableMessage(message);
+    }
     class ReceiveThread extends Thread {
 
         public void run() {
@@ -112,6 +126,10 @@ public class ClientComms  {
 
                     } else if(messageExpected.equals("view item")) {
                         receiveViewItemMessage((ViewItemMessage) message);
+                        System.out.println("Message: " + message);
+
+                    } else if(messageExpected.equals("reset table")) {
+                        receiveResetTableMessage((ResetTableMessage) message);
                         System.out.println("Message: " + message);
                     }
 
