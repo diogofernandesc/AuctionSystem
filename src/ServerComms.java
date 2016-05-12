@@ -1,3 +1,4 @@
+import javax.swing.text.View;
 import java.io.*;
 import java.net.*;
 
@@ -48,6 +49,9 @@ public class ServerComms {
 
                     } else if(message.getType().equals("sell item")) {
                         receiveSellItemMessage();
+
+                    } else if(message.getType().equals("view item")) {
+                        receiveViewItemMessage();
                     }
 
                 } catch(IOException e) {e.printStackTrace();
@@ -70,6 +74,11 @@ public class ServerComms {
     protected void receiveSellItemMessage() {
         SellItemMessage sellItemMessage = (SellItemMessage) message;
         server.receiveSellItemMessage(sellItemMessage);
+    }
+
+    protected void receiveViewItemMessage() {
+        ViewItemMessage viewItemMessage = (ViewItemMessage) message;
+        server.receiveViewItemMessage(viewItemMessage);
     }
 
     protected void Response(Object response)  {

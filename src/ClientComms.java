@@ -12,6 +12,7 @@ public class ClientComms  {
     RegisterMessage rm;
     SignInMessage sm;
     SellItemMessage sellItemMessage;
+    ViewItemMessage viewItemMessage;
     String str = "";
     String messageExpected;
     Boolean readReady;
@@ -62,6 +63,14 @@ public class ClientComms  {
         } catch (IOException e) {e.printStackTrace();}
     }
 
+    protected void sendViewItemMessage(String itemID, String category, Date createdAfter) {
+        try {
+            viewItemMessage = new ViewItemMessage(itemID, category, createdAfter);
+            out.writeObject(viewItemMessage);
+            messageExpected = "view item";
+        } catch(IOException e) {e.printStackTrace();}
+    }
+
     protected void receiveRegisterMessage(String message) {
         try {
             window.receiveRegisterMessage(message);
@@ -77,6 +86,10 @@ public class ClientComms  {
     protected void receiveSellItemMessage(SellItemMessage message) {
         window.receiveSellItemMessage(message);
 
+    }
+
+    protected void receiveViewItemMessage(ViewItemMessage message) {
+        window.receiveViewItemMessage(message);
     }
 
     class ReceiveThread extends Thread {
@@ -95,6 +108,10 @@ public class ClientComms  {
 
                     } else if (messageExpected.equals("sell item")) {
                         receiveSellItemMessage((SellItemMessage)message);
+                        System.out.println("Message: " + message);
+
+                    } else if(messageExpected.equals("view item")) {
+                        receiveViewItemMessage((ViewItemMessage) message);
                         System.out.println("Message: " + message);
                     }
 

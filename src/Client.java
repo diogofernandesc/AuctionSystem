@@ -108,6 +108,12 @@ public class Client {
                     message.getCloseTime(), message.getReservePrice(), message.getBidList());
         }
 
+        public void receiveViewItemMessage(ViewItemMessage message) {
+            ArrayList<Item> items = message.getSearchedItems();
+            mainUIPanel.newSearchTable(items);
+
+        }
+
         class SignInPanel extends JPanel {
 
             private JPanel bottomPanel;
@@ -361,6 +367,17 @@ public class Client {
                 JButton searchButton = new JButton("Search");
                 searchButton.setMaximumSize(new Dimension(250, 25));
 
+                searchButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String category = categoryButtons.getSelection().getActionCommand();
+                            Date date = (Date) createdDateSpinner.getValue();
+                            comms.sendViewItemMessage(itemIDField.getText(), category, date);
+                        } catch (NullPointerException e1) {}
+                    }
+                });
+
                 // Reset search button:
 
                 JButton resetSearchButton = new JButton("Reset search");
@@ -441,11 +458,11 @@ public class Client {
                                 hasFocus, row, column);
                     }
                 };
-                
+
+//                ((DefaultTableModel)table.getModel()).removeRow(rowToRemove);
                 table.getColumnModel().getColumn(5).setCellRenderer(tableCellRenderer);
                 table.getColumnModel().getColumn(6).setCellRenderer(tableCellRenderer);
-                itemDisplayPanel.add(table.getTableHeader());
-                itemDisplayPanel.add(table);
+
 
 
                 table.setRowHeight(0, 20);
@@ -454,6 +471,8 @@ public class Client {
                 table.getColumn("Description").setPreferredWidth(250);
                 table.getColumn("Reserve Price").setPreferredWidth(20);
 
+                itemDisplayPanel.add(table.getTableHeader());
+                itemDisplayPanel.add(table);
 
                 viewItemsPanel.add(itemSearchPanel, BorderLayout.WEST);
                 viewItemsPanel.add(itemDisplayPanel, BorderLayout.CENTER);
@@ -579,6 +598,16 @@ public class Client {
                 tableModel.addRow(objs);
             }
 
+            protected void newSearchTable(ArrayList<Item> items) {
+                tableModel.removeRow(0);
+               // tableModel.setRowCount(0);
+//                for (Item item : items) {
+//                    Object[] objs = {item.getItemID(), item.getTitle(), item.getDescription(), item.getCatKeyword(), item.getVendorID(),
+//                            item.getStartTime(), item.getCloseTime(), item.getReservePrice()};
+//                    tableModel.addRow(objs);
+//
+//                }
+            }
 
         }
 

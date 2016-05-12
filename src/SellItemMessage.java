@@ -26,6 +26,8 @@ public class SellItemMessage extends Message {
         this.setType("sell item");
     }
 
+    // Overloaded constructors for sell item message sent from server to client
+    // Server allocates a bid list
     public SellItemMessage(int itemID, String title, String description, String catKeyword, String vendorID,
                            Date startTime, Date closeTime, int reservePrice, ArrayList<Bid> bidList) {
         this.itemID = itemID;

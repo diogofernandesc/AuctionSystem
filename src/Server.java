@@ -68,9 +68,35 @@ public class Server {
 
         Item item = new Item(itemID,messageTitle,messageDescription, messageCatKeyword, messageVendorID, messageStartTime, messageCloseTime, messageReservePrice, messageBidList);
         items.put(itemID, item);
+        itemsList.add(item);
         SellItemMessage messageOut = new SellItemMessage(itemID,messageTitle,messageDescription, messageCatKeyword, messageVendorID,
                 messageStartTime, messageCloseTime, messageReservePrice, messageBidList);
         sendReply(messageOut);
+    }
+
+    protected void receiveViewItemMessage(ViewItemMessage viewItemMessage) {
+        ArrayList<Item> searchedItemList = new ArrayList<Item>();
+        String itemID = viewItemMessage.getItemID();
+        String category = viewItemMessage.getCategory();
+        Date createdAfterDate = viewItemMessage.getCreatedAfter();
+        if (!viewItemMessage.getItemID().equals("")) {
+            if (items.containsKey(Integer.parseInt(itemID))) {
+                searchedItemList.add(items.get(itemID));
+            }
+        }
+
+        for (Item item : itemsList) {
+            if (item.getCatKeyword().equals(category)) {
+                searchedItemList.add(item);
+            }
+
+            if (item.getStartTime().after(createdAfterDate)) {
+                searchedItemList.add(item);
+            }
+        }
+
+        ViewItemMessage searchedListMessage = new ViewItemMessage(searchedItemList);
+        sendReply(searchedListMessage);
     }
 
     protected void sendReply(Object message) {
@@ -81,4 +107,5 @@ public class Server {
     public static void main(String[] args) {
         new Server();
     }
+
 }
