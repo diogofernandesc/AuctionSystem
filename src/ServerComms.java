@@ -35,6 +35,11 @@ public class ServerComms {
             } catch(IOException e) {e.printStackTrace();}
         }
 
+        /*
+         * This executes for as long as there is users
+         * Each message has a type and this will check each messages type
+         * To know what message to send out back to the client
+         */
         public void run() {
             while(!stop) {
                 try {
@@ -61,6 +66,9 @@ public class ServerComms {
 
                     } else if(message.getType().equals("add to sell")) {
                         receiveAddToSellMessage();
+
+                    } else if(message.getType().equals("win")) {
+                        receiveWinMessage();
                     }
 
 
@@ -72,11 +80,13 @@ public class ServerComms {
             }
         }
 
-        public void cancel() {
-            interrupt();
-        }
     }
 
+    /*
+     * All receive methods convert the standard message to a message of the type they send
+     * E.g. receiveSignInMessage casts Message to SignInMessage
+     * And then they make the server do stuff with the message by calling the methods in it
+     */
     protected void receiveSignInMessage() {
         SignInMessage signInMessage = (SignInMessage) message;
         server.receiveSignInMessage(signInMessage);
@@ -112,9 +122,13 @@ public class ServerComms {
         server.receiveAddToSellMessage(addToSellListMessage);
     }
 
+    protected void receiveWinMessage() {
+        WinMessage winMessage = (WinMessage) message;
+        server.receiveWinMessage(winMessage);
+    }
+
     protected void Response(Object response)  {
         try {
-            //out.writeObject(String.valueOf(response));
             out.writeObject(response);
         } catch (IOException e) {
             e.printStackTrace();

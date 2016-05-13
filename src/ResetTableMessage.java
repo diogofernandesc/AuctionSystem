@@ -1,5 +1,8 @@
 import java.util.ArrayList;
 
+/*
+ * Reset the table when user presses reset search
+ */
 public class ResetTableMessage extends Message {
 
     String info;

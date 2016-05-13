@@ -12,7 +12,6 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
 public class Client {
@@ -20,8 +19,10 @@ public class Client {
     String activeUser;
     ClientComms comms;
     Display window;
+    ArrayList<Item> activeUserItems;
 
     public Client() throws Exception {
+        activeUserItems = new ArrayList<Item>();
         window = new Display("eAuctions");
         window.init();
         comms = new ClientComms(this, window);
@@ -36,7 +37,7 @@ public class Client {
         this.activeUser = user;
     }
 
-
+    // Class responsible for GUI
     class Display extends JFrame {
 
         private JPanel panels;
@@ -48,6 +49,8 @@ public class Client {
         JFrame windowFrame;
         DefaultTableModel seeTableModel;
         DefaultTableModel auctionsTableModel;
+        ArrayList<Object[]> objectList = new ArrayList<Object[]>();
+        JLabel welcomeLabel;
 
         public Display(String title) {
             super(title);
@@ -59,7 +62,6 @@ public class Client {
 
             Container container = this.getContentPane();
             container.setLayout(new FlowLayout());
-            //container.setLayout(new BorderLayout());
 
             signInPanel = new SignInPanel();
             registrationPanel = new RegistrationPanel();
@@ -70,11 +72,13 @@ public class Client {
             panels.setLayout(new CardLayout());
 
             // Adding different panels to the main Card Layout Panel
+            // CardLayout allows different "screens" on the same frame
             panels.add(signInPanel, "sign in");
             panels.add(registrationPanel, "register");
             panels.add(mainUIPanel, "main ui");
 
             cardLayout = (CardLayout) (panels.getLayout());
+            // Sets initial "screen" to the sign in screen
             cardLayout.show(panels, "sign in");
 
             container.add(panels);
@@ -84,6 +88,9 @@ public class Client {
 
         }
 
+        /*
+         * Message either invalid or the username
+         */
         public void receiveRegisterMessage(String message) {
             if (message.equals("invalid")) {
                 JOptionPane.showMessageDialog(window, "Username already in use", "Invalid username",JOptionPane.ERROR_MESSAGE);
@@ -93,11 +100,19 @@ public class Client {
             }
         }
 
+        /*
+         * The message can be either wrong password
+         * or wrong username
+         * Depending on which it is an option pane is opened with the suitable error
+         * If successful, the welcome label in the main gui is set to have the user's username
+         * Panel is also changed to the main ui panel
+         */
         public void receiveSignInMessage(String message) {
             String[] successMessage = message.split(",");
             if (successMessage[0].equals("success")) {
                 cardLayout.show(panels, "main ui");
                 activeUser = successMessage[1];
+                welcomeLabel.setText("Welcome, "+activeUser);
 
             } else if (message.equals("wrong password")) {
                 JOptionPane.showMessageDialog(window, "The password you entered is incorrect", "Invalid password", JOptionPane.ERROR_MESSAGE);
@@ -107,28 +122,39 @@ public class Client {
             }
         }
 
+        // Explained in addItem
         public void receiveSellItemMessage(SellItemMessage message) {
             mainUIPanel.addItem(message.getItemID(), message.getTitle(), message.getDescription(), message.getCatKeyword(), activeUser, message.getStartTime(),
                     message.getCloseTime(), message.getReservePrice(), message.getBidList());
         }
 
+        // Explained in newSearchTable
         public void receiveViewItemMessage(ViewItemMessage message) {
             ArrayList<Item> items = message.getSearchedItems();
             mainUIPanel.newSearchTable(items);
         }
 
+        // Explained in newSearchTable
         public void receiveResetTableMessage(ResetTableMessage message) {
             ArrayList<Item> items = message.getResetList();
             mainUIPanel.newSearchTable(items);
 
         }
 
+        /*
+         * The message gotten represents whether the bid was successful or not
+         * If the response is successful then the bid field is set to the new highest bid
+         * The table representing the user's own bids is also updated with the new item they've bid on
+         * A pop up message is also displayed with the appropriate message
+         */
         public void receiveBidMessage(BidMessage message) {
             if(message.getResponse().equals("success")) {
                 currentBidField.setText("£"+String.valueOf(message.getBidAmount()));
                 Item item = message.getItem();
+                activeUserItems.add(item);
                 Object[] objs = {item.getItemID(), item.getTitle(), item.getReservePrice(), message.getBidAmount(), item.getCloseTime()};
                 seeTableModel.addRow(objs);
+                JOptionPane.showMessageDialog(windowFrame, "Bid successful", "Bid successful", JOptionPane.INFORMATION_MESSAGE);
 
             }
             else if (message.getResponse().equals("fail")) {
@@ -136,9 +162,33 @@ public class Client {
             }
         }
 
+        /*
+         * This JTable is responsible for keeping track of all the items the user has put up for sale
+         * This simply adds a row with the designated information to that table
+         */
         public void receiveAddToSellMessage(AddToSellListMessage message) {
-            Object[] objs = {message.getItemID(), message.getItemTitle(), message.getStatus(), message.getItemRP(), message.getCurrentBid(), message.getItemCloseTime() };
+
+            Object[] objs = {message.getItemID(), message.getItemTitle(), message.getStatus(), message.getItemRP(), message.getCurrentBid(), message.getItemCloseTime()};
             auctionsTableModel.addRow(objs);
+        }
+
+        /*
+         * Simply shows a message depending on whether the user has won, lost, the auction is ongoing or the auction finished with no bids
+         * This occurs when the user presses the notifications button in the main ui page
+         */
+        public void receiveWinMessage(WinMessage message) {
+            if (message.getResponse().equals("won")) {
+                JOptionPane.showMessageDialog(window, "You have the item: "+message.getItem().getTitle(), "You have won!", JOptionPane.OK_OPTION);
+
+            } else if (message.getResponse().equals("lost")) {
+                JOptionPane.showMessageDialog(window, "You have lost the item: "+message.getItem().getTitle(), "You have lost!", JOptionPane.ERROR_MESSAGE);
+
+            } else if (message.getResponse().equals("ongoing")) {
+                JOptionPane.showMessageDialog(window, "Auction ongoing", "Auction ongoing", JOptionPane.INFORMATION_MESSAGE);
+
+            } else if (message.getResponse().equals("no bid")) {
+                JOptionPane.showMessageDialog(window, "No bids happened", "No bids happened", JOptionPane.INFORMATION_MESSAGE);
+            }
         }
 
         class SignInPanel extends JPanel {
@@ -179,6 +229,7 @@ public class Client {
                     }
                 });
 
+                // ActionListener to send a sign in message
                 signInButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -257,8 +308,6 @@ public class Client {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            //sendRegisterMessage(givenNameField.getText(), familyNameField.getText(), String.valueOf(passwordField.getPassword()));
-                            //comms.startConnection();
                             comms.sendRegisterMessage(usernameField.getText(),givenNameField.getText(), familyNameField.getText(), String.valueOf(passwordField.getPassword()));
 
                         } catch (Exception e1) {e1.printStackTrace();}
@@ -330,8 +379,53 @@ public class Client {
                 this.add(tabbedPane);
 
                 /* -----------VIEW BIDS TABBED PANE--------------*/
+
                 JPanel viewItemsPanel = new JPanel();
                 viewItemsPanel.setLayout(new BorderLayout());
+
+                /* ------ Notifications --------- */
+
+                JPanel notificationPanel = new JPanel();
+                notificationPanel.setLayout(new BoxLayout(notificationPanel, BoxLayout.X_AXIS));
+
+                welcomeLabel = new JLabel("Welcome, "+activeUser);
+                JButton checkNotifications = new JButton("Check for notifications");
+                JButton logOutButton = new JButton("Log out");
+                logOutButton.setForeground(Color.WHITE);
+                logOutButton.setBackground(Color.RED);
+
+                // Checks the status of the last item the user has won, lost
+                // Also checks the auctions the user has up
+                checkNotifications.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (activeUserItems.size() == 1) {
+                            comms.sendWinMessage(activeUserItems.get(activeUserItems.size() - 1), activeUser);
+                        } else {
+                            comms.sendWinMessage(activeUserItems.get(activeUserItems.size()), activeUser);
+                        }
+
+                    }
+                });
+
+                // Takes user to login screen
+                logOutButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        cardLayout.show(panels, "sign in");
+                    }
+                });
+
+                notificationPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+                notificationPanel.add(welcomeLabel);
+                notificationPanel.add(Box.createRigidArea(new Dimension(500, 0)));
+                notificationPanel.add(checkNotifications);
+                notificationPanel.add(Box.createRigidArea(new Dimension(300, 0)));
+                notificationPanel.add(logOutButton);
+
+                viewItemsPanel.add(notificationPanel, BorderLayout.NORTH);
+
+                /* ----- Item search and view */
 
                 itemSearchPanel = new JPanel();
                 itemSearchPanel.setLayout(new BoxLayout(itemSearchPanel, BoxLayout.Y_AXIS));
@@ -344,7 +438,7 @@ public class Client {
                 itemDisplayPanel.setLayout(new BoxLayout(itemDisplayPanel, BoxLayout.Y_AXIS));
                 itemDisplayPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 itemDisplayPanel.setBorder(new TitledBorder(new EtchedBorder(), "Item Display"));
-                itemDisplayPanel.setPreferredSize(new Dimension(990, 535));
+                itemDisplayPanel.setPreferredSize(new Dimension(990, 510)); //535
 
                 // Labels and fields for ID and created after:
                 JLabel itemIDLabel = new JLabel("Item ID");
@@ -383,6 +477,10 @@ public class Client {
                 JButton searchButton = new JButton("Search");
                 searchButton.setMaximumSize(new Dimension(125, 25));
 
+                /*
+                 * Gets the necessary information the user wants to search items for
+                 * Updates the table accordingly
+                 */
                 searchButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -397,7 +495,6 @@ public class Client {
                             vendorID = "";
                         }
                         String category = (String)categoriesComboBox.getSelectedItem();
-                        System.out.println("Category is: " + category);
                         Date date = (Date) createdDateSpinner.getValue();
                         comms.sendViewItemMessage(itemID, vendorID, category, date);
 
@@ -409,6 +506,7 @@ public class Client {
                 JButton resetSearchButton = new JButton("Reset search");
                 resetSearchButton.setMaximumSize(new Dimension(125,25));
 
+                // Send a reset table message to bring back the table to how it was originally
                 resetSearchButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -451,9 +549,8 @@ public class Client {
 
                 // ITEM DISPLAY PANEL //
 
-                //JList bids = new JList(listModel);
+
                 String[] columnNames = {"ID", "Title", "Description", "Category", "Seller ID", "Start Time", "Close Time", "Reserve Price"};
-//                tableData = {{new Integer(1), "random", "pretty awesome pretty awesomepretty awesome pretty awesome ", "Sports", "242", "01:42", "04:42", "£123.00", values}};
 
                 tableModel = new DefaultTableModel(columnNames, 0);
                 // Makes jtable uneditable apart from the last bids comboBox which is only there to show a list of bids
@@ -468,6 +565,7 @@ public class Client {
                     }
                 };
 
+                // Makes it so the dates on the JTable are formatted properly
                 TableCellRenderer tableCellRenderer = new DefaultTableCellRenderer() {
 
                     SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss dd/MM/yy");
@@ -483,12 +581,8 @@ public class Client {
                     }
                 };
 
-//                ((DefaultTableModel)table.getModel()).removeRow(rowToRemove);
                 table.getColumnModel().getColumn(5).setCellRenderer(tableCellRenderer);
                 table.getColumnModel().getColumn(6).setCellRenderer(tableCellRenderer);
-
-
-
                 table.setRowHeight(0, 20);
                 table.getColumn("ID").setPreferredWidth(5);
                 table.getColumn("Title").setPreferredWidth(100);
@@ -499,6 +593,7 @@ public class Client {
                 table.getColumn("Close Time").setPreferredWidth(50);
                 table.getColumn("Reserve Price").setPreferredWidth(20);
 
+                // Opens up a small window frame which allows the user to bid on items
                 table.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
@@ -525,7 +620,6 @@ public class Client {
                 viewItemsPanel.add(itemSearchPanel, BorderLayout.WEST);
                 viewItemsPanel.add(itemDisplayPanel, BorderLayout.CENTER);
                 // Created tabbed panes:
-
                 tabbedPane.addTab("View items", viewItemsPanel);
 
 
@@ -577,9 +671,11 @@ public class Client {
                 JSpinner.DateEditor ede = new JSpinner.DateEditor(endDateSpinner, "dd/MM/yyyy HH:mm:ss");
                 endDateSpinner.setEditor(ede);
                 endDateSpinner.setMaximumSize(new Dimension(200,25));
-
-
                 JButton submitItemButton = new JButton("Submit item");
+
+                // Gets the necessary information from the fields in the JPanel the user uses to sell an item
+                // Clicking the button collects information and sets an item up for auction
+                // Pop up window to tell the user the item is up for action also appears upon click
                 submitItemButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -592,7 +688,9 @@ public class Client {
                         comms.sendSellItemMessage(title, description,category, activeUser,
                                 startDate, endDate, reservePrice);
 
-                        cardLayout.show(panels,"main ui");
+                        JOptionPane.showMessageDialog(window, "Your item is now up to for auction!", "Auction started", JOptionPane.INFORMATION_MESSAGE);
+                        tabbedPane.setSelectedIndex(0);
+
                     }
                 });
 
@@ -645,16 +743,14 @@ public class Client {
 
                 // --- SEE ACTIVE BIDS PANE --- //
 
+                // JTable responsible for the active user's bids
                 JPanel activeBidsPanel = new JPanel();
                 activeBidsPanel.setLayout(new BoxLayout(activeBidsPanel, BoxLayout.Y_AXIS));
                 tabbedPane.add("My bids", activeBidsPanel);
 
-                //JList bids = new JList(listModel);
                 String[] seeBidsColumns = {"Item ID", "Title", "Reserve Price", "My bid", "Close Time"};
 
                 seeTableModel = new DefaultTableModel(seeBidsColumns, 0);
-                // Makes jtable uneditable apart from the last bids comboBox which is only there to show a list of bids
-                // Needs to be editable to see contents
                 seeTable = new JTable(seeTableModel) {
                     public boolean isCellEditable(int r, int c) {
                         if (c == 8) {
@@ -665,8 +761,6 @@ public class Client {
                     }
                 };
 
-
-//                ((DefaultTableModel)table.getModel()).removeRow(rowToRemove);
                 seeTable.getColumnModel().getColumn(4).setCellRenderer(tableCellRenderer);
 
                 seeTable.setRowHeight(0, 20);
@@ -677,6 +771,8 @@ public class Client {
 
                 // ------- My auctions Pane ------ //
 
+                // JTable responsible for the status of the auctions the user has started
+                // Refreshing it collects new auctions the user may have started in the mean time
                 JPanel myAuctionsPanel = new JPanel();
                 myAuctionsPanel.setLayout(new BoxLayout(myAuctionsPanel, BoxLayout.Y_AXIS));
                 tabbedPane.add("My Auctions", myAuctionsPanel);
@@ -758,6 +854,7 @@ public class Client {
                         JTextField bidAmountField = new JTextField("Enter bid amount here");
                         bidAmountField.setMaximumSize(new Dimension(150,20));
 
+                        // Submits bid and closes window
                         submitBidButton.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
@@ -819,6 +916,10 @@ public class Client {
                 });
             }
 
+            /*
+             * Creates an object array with multiple items wihich is then passed to the table model to populate the JTable
+             * The JTable in question is the one the user sees when searching for items
+             */
             protected void addItem(int itemID, String title, String description, String catKeyword,
                                    String vendorID,Date startTime, Date closeTime, double reservePrice, ArrayList<Bid> bidList) {
 
@@ -827,54 +928,17 @@ public class Client {
                 tableModel.addRow(objs);
             }
 
+            // This creates a new tableModel and set the JTable to it
+            // This JTable is representative of what the user would search for
             protected void newSearchTable(ArrayList<Item> items) {
-                //tableModel.removeRow(0);
                 tableModel.setRowCount(0);
                 for (Item item : items) {
-                    System.out.println("ITEM:");
-                    System.out.println(item.getItemID());
-                    System.out.println(item.getTitle());
-                    System.out.println(item.getDescription());
-                    System.out.println(item.getCatKeyword());
-                    System.out.println(item.getVendorID());
-                    System.out.println(item.getStartTime());
-                    System.out.println(item.getCloseTime());
-                    System.out.println(item.getReservePrice());
                     Object[] objs = {item.getItemID(), item.getTitle(), item.getDescription(), item.getCatKeyword(), item.getVendorID(),
                             item.getStartTime(), item.getCloseTime(), item.getReservePrice()};
                     tableModel.addRow(objs);
-
                 }
             }
 
-
-
         }
-
-        class BidComboBoxRenderer extends JComboBox implements TableCellRenderer {
-            public BidComboBoxRenderer(String[] bids) {
-                super(bids);
-            }
-
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
-                if (isSelected) {
-                    setForeground(table.getSelectionForeground());
-                    super.setBackground(table.getSelectionBackground());
-                } else {
-                    setForeground(table.getForeground());
-                    setBackground(table.getBackground());
-                }
-                setSelectedItem(value);
-                return this;
-            }
-        }
-
-        class BidComboBoxEditor extends DefaultCellEditor {
-            public BidComboBoxEditor(String[] bids) {
-                super(new JComboBox(bids));
-            }
-        }
-
     }
 }

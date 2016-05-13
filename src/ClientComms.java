@@ -18,6 +18,7 @@ public class ClientComms  {
     ResetTableMessage resetTableMessage;
     BidMessage bidMessage;
     AddToSellListMessage addToSellListMessage;
+    WinMessage winMessage;
     String str = "";
     String messageExpected;
     Boolean readReady;
@@ -32,6 +33,7 @@ public class ClientComms  {
         t = new ReceiveThread();
     }
 
+    // Called when the user starts the client
     protected void startConnection() {
         try {
             s = new Socket("127.0.0.1", 28847);
@@ -42,6 +44,12 @@ public class ClientComms  {
         }catch(Exception e){}
     }
 
+    /*
+     *Send register message which the client uses to send a register message
+     * out.writeObject sends the object using the objectOutputStream
+     * messageExpected is used to tell the comms what message to expect next from the server
+     * This will be the same for the rest of the remaining message
+     */
     protected void sendRegisterMessage(String username, String givenName, String familyName, String password)  {
 
         try {
@@ -100,16 +108,23 @@ public class ClientComms  {
         } catch(IOException e) {e.printStackTrace();}
     }
 
-    protected void receiveRegisterMessage(String message) {
+    protected void sendWinMessage(Item item, String userID) {
         try {
-            window.receiveRegisterMessage(message);
-            //client.receiveRegisterMessage(message);
-        } catch(Exception e1) {System.out.println(e1 + "receive error");}
+            winMessage = new WinMessage(item, userID);
+            out.writeObject(winMessage);
+            messageExpected = "win";
+        } catch(IOException e) {e.printStackTrace();}
+    }
+
+    /*
+     * Receive Messages simply call the exact same method in the client class
+     */
+    protected void receiveRegisterMessage(String message) {
+        window.receiveRegisterMessage(message);
     }
 
     protected void receiveSignInMessage(String message) {
         window.receiveSignInMessage(message);
-
     }
 
     protected void receiveSellItemMessage(SellItemMessage message) {
@@ -122,7 +137,7 @@ public class ClientComms  {
     }
 
     protected void receiveResetTableMessage(ResetTableMessage message) {
-         window.receiveResetTableMessage(message);
+        window.receiveResetTableMessage(message);
     }
 
     protected void receiveBidMessage(BidMessage message) {
@@ -133,44 +148,49 @@ public class ClientComms  {
         window.receiveAddToSellMessage(message);
     }
 
-    class ReceiveThread extends Thread {
+    protected void receiveWinMessage(WinMessage message) {
+        window.receiveWinMessage(message);
+    }
 
+    /*
+     * This thread is constantly looking for objects to read until all clients have closed
+     * It uses message expected to know what to do with what it reads
+     */
+    class ReceiveThread extends Thread {
+        boolean stop = false;
         public void run() {
-            while (true) {
+            while (!stop) {
                 try {
                     Object message = in.readObject();
                     if (messageExpected.equals("register")) {
                         receiveRegisterMessage((String)message);
-                        System.out.println("Message: " + message);
 
                     } else if (messageExpected.equals("sign in")) {
                         receiveSignInMessage((String)message);
-                        System.out.println("Message: " + message);
 
                     } else if (messageExpected.equals("sell item")) {
                         receiveSellItemMessage((SellItemMessage)message);
-                        System.out.println("Message: " + message);
 
                     } else if(messageExpected.equals("view item")) {
                         receiveViewItemMessage((ViewItemMessage) message);
-                        System.out.println("Message: " + message);
 
                     } else if(messageExpected.equals("reset table")) {
                         receiveResetTableMessage((ResetTableMessage) message);
-                        System.out.println("Message: " + message);
 
                     } else if(messageExpected.equals("bid")) {
                         receiveBidMessage((BidMessage) message);
-                        System.out.println("Message: " + message);
 
                     } else if(messageExpected.equals("add to sell")) {
                         receiveAddToSellMessage((AddToSellListMessage) message);
-                        System.out.println("Message: " + message);
-                        //messageExpected changes to receiveNotification all the other times
-                        // changes when u call the receive
+
+                    } else if(messageExpected.equals("win")) {
+                        receiveWinMessage((WinMessage) message);
                     }
 
-                } catch(IOException e) {e.printStackTrace();
+                    // Warning message for when all clients exit
+                } catch(IOException e) {
+                    System.out.println("Server has crashed");
+                    stop = true;
                 } catch(ClassNotFoundException e) {e.printStackTrace();}
 
             }
