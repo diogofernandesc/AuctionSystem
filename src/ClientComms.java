@@ -16,6 +16,8 @@ public class ClientComms  {
     SellItemMessage sellItemMessage;
     ViewItemMessage viewItemMessage;
     ResetTableMessage resetTableMessage;
+    BidMessage bidMessage;
+    AddToSellListMessage addToSellListMessage;
     String str = "";
     String messageExpected;
     Boolean readReady;
@@ -82,6 +84,22 @@ public class ClientComms  {
         } catch(IOException e) {e.printStackTrace();}
     }
 
+    protected void sendBidMessage(int itemID, double bidAmount, String userID) {
+        try {
+            bidMessage = new BidMessage(itemID, bidAmount, userID);
+            out.writeObject(bidMessage);
+            messageExpected = "bid";
+        } catch(IOException e) {e.printStackTrace();}
+    }
+
+    protected void sendAddToSellListMessage(String title, double rp, Date closeTime) {
+        try {
+            addToSellListMessage = new AddToSellListMessage(title, rp, closeTime);
+            out.writeObject(addToSellListMessage);
+            messageExpected = "add to sell";
+        } catch(IOException e) {e.printStackTrace();}
+    }
+
     protected void receiveRegisterMessage(String message) {
         try {
             window.receiveRegisterMessage(message);
@@ -106,6 +124,15 @@ public class ClientComms  {
     protected void receiveResetTableMessage(ResetTableMessage message) {
          window.receiveResetTableMessage(message);
     }
+
+    protected void receiveBidMessage(BidMessage message) {
+        window.receiveBidMessage(message);
+    }
+
+    protected void receiveAddToSellMessage(AddToSellListMessage message) {
+        window.receiveAddToSellMessage(message);
+    }
+
     class ReceiveThread extends Thread {
 
         public void run() {
@@ -131,6 +158,16 @@ public class ClientComms  {
                     } else if(messageExpected.equals("reset table")) {
                         receiveResetTableMessage((ResetTableMessage) message);
                         System.out.println("Message: " + message);
+
+                    } else if(messageExpected.equals("bid")) {
+                        receiveBidMessage((BidMessage) message);
+                        System.out.println("Message: " + message);
+
+                    } else if(messageExpected.equals("add to sell")) {
+                        receiveAddToSellMessage((AddToSellListMessage) message);
+                        System.out.println("Message: " + message);
+                        //messageExpected changes to receiveNotification all the other times
+                        // changes when u call the receive
                     }
 
                 } catch(IOException e) {e.printStackTrace();

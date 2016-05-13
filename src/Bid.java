@@ -1,13 +1,20 @@
-/**
- * Created by Diogo on 28/04/2016.
- */
-public class Bid {
+import java.io.Serializable;
+
+public class Bid implements Serializable{
 
     double amount;
+    String userID;
 
-    public Bid(double amount) {
+    public Bid(double amount, String userID) {
         this.amount = amount;
+        this.userID = userID;
     }
 
+    public double getAmount() {
+        return amount;
+    }
 
+    public String getUserID() {
+        return userID;
+    }
 }

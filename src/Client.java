@@ -12,6 +12,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
 public class Client {
@@ -43,7 +44,10 @@ public class Client {
         SignInPanel signInPanel;
         RegistrationPanel registrationPanel;
         MainClientUI mainUIPanel;
-
+        JTextField currentBidField;
+        JFrame windowFrame;
+        DefaultTableModel seeTableModel;
+        DefaultTableModel auctionsTableModel;
 
         public Display(String title) {
             super(title);
@@ -51,7 +55,6 @@ public class Client {
 
         protected void init() {
             this.setPreferredSize(new Dimension(1200, 600));
-            this.setResizable(true);
             this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
             Container container = this.getContentPane();
@@ -72,7 +75,7 @@ public class Client {
             panels.add(mainUIPanel, "main ui");
 
             cardLayout = (CardLayout) (panels.getLayout());
-            cardLayout.show(panels, "main ui");
+            cardLayout.show(panels, "sign in");
 
             container.add(panels);
             this.pack();
@@ -118,6 +121,24 @@ public class Client {
             ArrayList<Item> items = message.getResetList();
             mainUIPanel.newSearchTable(items);
 
+        }
+
+        public void receiveBidMessage(BidMessage message) {
+            if(message.getResponse().equals("success")) {
+                currentBidField.setText("£"+String.valueOf(message.getBidAmount()));
+                Item item = message.getItem();
+                Object[] objs = {item.getItemID(), item.getTitle(), item.getReservePrice(), message.getBidAmount(), item.getCloseTime()};
+                seeTableModel.addRow(objs);
+
+            }
+            else if (message.getResponse().equals("fail")) {
+                JOptionPane.showMessageDialog(windowFrame, "Bid amount too low", "Bid amount too low",JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        public void receiveAddToSellMessage(AddToSellListMessage message) {
+            Object[] objs = {message.getItemID(), message.getItemTitle(), message.getStatus(), message.getItemRP(), message.getCurrentBid(), message.getItemCloseTime() };
+            auctionsTableModel.addRow(objs);
         }
 
         class SignInPanel extends JPanel {
@@ -287,6 +308,15 @@ public class Client {
             private JPanel itemDisplayPanel;
             DefaultTableModel tableModel;
             JTable table;
+            JTable seeTable;
+            JTable auctionsTable;
+            String category;
+            Date startDate;
+            Date endDate;
+            String title;
+            String description;
+            double reservePrice;
+
 
             public MainClientUI() {
                 this.setLayout(new BorderLayout());
@@ -420,7 +450,6 @@ public class Client {
                 itemSearchPanel.add(resetSearchButton);
 
                 // ITEM DISPLAY PANEL //
-                ArrayList<Integer> users = new ArrayList<Integer>();
 
                 //JList bids = new JList(listModel);
                 String[] columnNames = {"ID", "Title", "Description", "Category", "Seller ID", "Start Time", "Close Time", "Reserve Price"};
@@ -554,11 +583,16 @@ public class Client {
                 submitItemButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String category = (String)categoriesCombo.getSelectedItem();
-                        Date startDate = (Date) startDateSpinner.getValue();
-                        Date endDate = (Date) endDateSpinner.getValue();
-                        comms.sendSellItemMessage(itemTitleField.getText(), itemDescriptionField.getText(),category, activeUser,
-                                startDate, endDate, Double.parseDouble(itemReservePriceField.getText()));
+                        category = (String)categoriesCombo.getSelectedItem();
+                        startDate = (Date) startDateSpinner.getValue();
+                        endDate = (Date) endDateSpinner.getValue();
+                        title = itemTitleField.getText();
+                        description = itemDescriptionField.getText();
+                        reservePrice = Double.parseDouble(itemReservePriceField.getText());
+                        comms.sendSellItemMessage(title, description,category, activeUser,
+                                startDate, endDate, reservePrice);
+
+                        cardLayout.show(panels,"main ui");
                     }
                 });
 
@@ -612,24 +646,83 @@ public class Client {
                 // --- SEE ACTIVE BIDS PANE --- //
 
                 JPanel activeBidsPanel = new JPanel();
+                activeBidsPanel.setLayout(new BoxLayout(activeBidsPanel, BoxLayout.Y_AXIS));
                 tabbedPane.add("My bids", activeBidsPanel);
 
+                //JList bids = new JList(listModel);
+                String[] seeBidsColumns = {"Item ID", "Title", "Reserve Price", "My bid", "Close Time"};
 
-                // -- My auctions -- //
+                seeTableModel = new DefaultTableModel(seeBidsColumns, 0);
+                // Makes jtable uneditable apart from the last bids comboBox which is only there to show a list of bids
+                // Needs to be editable to see contents
+                seeTable = new JTable(seeTableModel) {
+                    public boolean isCellEditable(int r, int c) {
+                        if (c == 8) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                };
+
+
+//                ((DefaultTableModel)table.getModel()).removeRow(rowToRemove);
+                seeTable.getColumnModel().getColumn(4).setCellRenderer(tableCellRenderer);
+
+                seeTable.setRowHeight(0, 20);
+
+                activeBidsPanel.add(seeTable.getTableHeader());
+                activeBidsPanel.add(seeTable);
+
+
+                // ------- My auctions Pane ------ //
 
                 JPanel myAuctionsPanel = new JPanel();
+                myAuctionsPanel.setLayout(new BoxLayout(myAuctionsPanel, BoxLayout.Y_AXIS));
                 tabbedPane.add("My Auctions", myAuctionsPanel);
 
-            }
+                JButton refreshButton = new JButton("Refresh");
+                refreshButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                myAuctionsPanel.add(refreshButton);
+                refreshButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        comms.sendAddToSellListMessage(title, reservePrice, endDate);
+                    }
+                });
+                //JList bids = new JList(listModel);
+                String[] auctionsColumns = {"Item ID", "Title", "Status", "Reserve Price", "Current Bid", "Close Time"};
 
+                auctionsTableModel = new DefaultTableModel(auctionsColumns, 0);
+                // Makes jtable uneditable apart from the last bids comboBox which is only there to show a list of bids
+                // Needs to be editable to see contents
+                auctionsTable = new JTable(auctionsTableModel) {
+                    public boolean isCellEditable(int r, int c) {
+                        if (c == 8) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                };
+
+//                ((DefaultTableModel)table.getModel()).removeRow(rowToRemove);
+                auctionsTable.getColumnModel().getColumn(5).setCellRenderer(tableCellRenderer);
+
+                auctionsTable.setRowHeight(0, 20);
+
+                myAuctionsPanel.add(auctionsTable.getTableHeader());
+                myAuctionsPanel.add(auctionsTable);
+
+            }
 
             // ------ OPTION PANE TO BID ON ITEMS ------- //
             public void createFrame(String itemTitle, int itemID, String description, String category, String sellerID, double reservePrice, Date startTime, Date closeTime) {
                 EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        JFrame windowFrame = new JFrame("Bid");
-                        windowFrame.setPreferredSize(new Dimension(400,400));
+                        windowFrame = new JFrame("Bid");
+                        windowFrame.setPreferredSize(new Dimension(500,500));
                         windowFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                         JPanel bidPanel = new JPanel();
                         windowFrame.setContentPane(bidPanel);
@@ -645,6 +738,10 @@ public class Client {
                         bidItemTitle.setFont(new Font(bidItemTitle.getFont().getFontName(), Font.BOLD,15));
                         JLabel bidItemID = new JLabel("Item ID: "+String.valueOf(itemID));
                         JLabel bidSellerID = new JLabel("You are buying from: "+ sellerID);
+                        JLabel currentBid = new JLabel("Current bid");
+                        currentBidField = new JTextField("No initial bid placed yet");
+                        currentBidField.setMaximumSize(new Dimension(150,20));
+                        currentBidField.setEditable(false);
                         JLabel bidItemCategory = new JLabel("Category: "+category);
                         JLabel itemDescriptionLabel = new JLabel("Description");
                         JTextArea itemDescriptionArea = new JTextArea(description);
@@ -661,10 +758,21 @@ public class Client {
                         JTextField bidAmountField = new JTextField("Enter bid amount here");
                         bidAmountField.setMaximumSize(new Dimension(150,20));
 
+                        submitBidButton.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                String itemID = bidItemID.getText().split(": ")[1];
+                                comms.sendBidMessage(Integer.parseInt(itemID),Double.parseDouble(bidAmountField.getText()),activeUser);
+                                windowFrame.dispatchEvent(new WindowEvent(windowFrame, WindowEvent.WINDOW_CLOSING));
+                            }
+                        });
+
 
                         bidItemTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
                         bidItemID.setAlignmentX(Component.CENTER_ALIGNMENT);
                         bidSellerID.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        currentBid.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        currentBidField.setAlignmentX(Component.CENTER_ALIGNMENT);
                         bidItemCategory.setAlignmentX(Component.CENTER_ALIGNMENT);
                         itemDescriptionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                         itemDescriptionArea.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -678,6 +786,10 @@ public class Client {
                         bidBottom.add(bidItemTitle);
                         bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
                         bidBottom.add(bidItemID);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 10)));
+                        bidBottom.add(currentBid);
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
+                        bidBottom.add(currentBidField);
                         bidBottom.add(Box.createRigidArea(new Dimension(5, 25)));
                         bidBottom.add(bidSellerID);
                         bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
@@ -691,7 +803,7 @@ public class Client {
                         bidBottom.add(bidCloseTime);
                         bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
                         bidBottom.add(bidItemRP);
-                        bidBottom.add(Box.createRigidArea(new Dimension(5, 30)));
+                        bidBottom.add(Box.createRigidArea(new Dimension(5, 20)));
                         bidBottom.add(bidAmountField);
                         bidBottom.add(Box.createRigidArea(new Dimension(5, 5)));
                         bidBottom.add(submitBidButton);
@@ -702,7 +814,6 @@ public class Client {
                         windowFrame.pack();
                         windowFrame.setVisible(true);
                         windowFrame.setResizable(false);
-
 
                     }
                 });

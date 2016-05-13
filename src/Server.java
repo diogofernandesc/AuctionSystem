@@ -113,6 +113,65 @@ public class Server {
         }
     }
 
+    protected void receiveBidMessage(BidMessage bidMessage) {
+        boolean highest = false; // To start off with the bid is not the highest, has to be checked
+        int itemID = bidMessage.getItemID();
+        double bidAmount = bidMessage.getBidAmount();
+        String userID = bidMessage.getUserID();
+        Item item = items.get(itemID);
+        double itemReservePrice = item.getReservePrice();
+        if(bidAmount > itemReservePrice) {
+            if (item.getBidList().size() < 1) {
+                highest = true;
+            }
+            for(Bid bid: item.getBidList()) {
+                if (bidAmount > bid.getAmount()) {
+                    highest = true;
+                } else if (bidAmount < bid.getAmount()){
+                    highest = false;
+                }
+            }
+        }
+
+        if (highest) {
+            item.getBidList().add(new Bid(bidAmount, userID));
+            BidMessage message = new BidMessage("success", bidAmount,item);
+            sendReply(message);
+        } else {
+            BidMessage message = new BidMessage("fail");
+            sendReply(message);
+        }
+    }
+
+    protected void receiveAddToSellMessage(AddToSellListMessage addToSellListMessage) {
+        Item itemToAdd = null;
+        Bid highestBid = null;
+        for (Item item: itemsList) {
+           if (item.getTitle().equals(addToSellListMessage.getItemTitle())) {
+               itemToAdd = item;
+           }
+        }
+        if (itemToAdd.getBidList().size() == 0) {
+            highestBid = new Bid(0,itemToAdd.getVendorID());
+        } else {
+            highestBid = itemToAdd.getBidList().get(itemToAdd.getBidList().size());
+        }
+
+        String status = null;
+        Date currentDate = new Date();
+        if (currentDate.before(itemToAdd.getStartTime())) {
+            status = "Starting soon";
+        } else if (currentDate.after(itemToAdd.getStartTime())) {
+            status = "In progress";
+
+        } else if (currentDate.after(itemToAdd.getCloseTime())) {
+            status = "finished";
+        }
+
+        AddToSellListMessage message = new AddToSellListMessage(itemToAdd.getItemID(), itemToAdd.getTitle(), status, itemToAdd.getReservePrice(), highestBid.getAmount(), itemToAdd.getCloseTime());
+        sendReply(message);
+    }
+
     protected void sendReply(Object message) {
         comms.Response(message);
     }

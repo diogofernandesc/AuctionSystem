@@ -55,12 +55,25 @@ public class ServerComms {
 
                     } else if(message.getType().equals("reset table")) {
                         receiveResetTableMessage();
+
+                    } else if(message.getType().equals("bid")) {
+                        receiveBidMessage();
+
+                    } else if(message.getType().equals("add to sell")) {
+                        receiveAddToSellMessage();
                     }
 
-                } catch(IOException e) {e.printStackTrace();
+
+                } catch(IOException e) {
+                    System.out.println("All users have exited, please restart server");
+                    stop = true;
                 } catch(ClassNotFoundException e) {e.printStackTrace(); }
 
             }
+        }
+
+        public void cancel() {
+            interrupt();
         }
     }
 
@@ -87,6 +100,16 @@ public class ServerComms {
     protected void receiveResetTableMessage() {
         ResetTableMessage resetTableMessage = (ResetTableMessage) message;
         server.receiveResetTableMessage(resetTableMessage);
+    }
+
+    protected void receiveBidMessage() {
+        BidMessage bidMessage = (BidMessage) message;
+        server.receiveBidMessage(bidMessage);
+    }
+
+    protected void receiveAddToSellMessage() {
+        AddToSellListMessage addToSellListMessage = (AddToSellListMessage) message;
+        server.receiveAddToSellMessage(addToSellListMessage);
     }
 
     protected void Response(Object response)  {
